@@ -19,8 +19,19 @@
     <main>
         <div id="map"></div>
         <div class="controls">
-            <p>Haz clic en el mapa para añadir un nuevo punto.</p>
+            <h3>Puntos</h3>
+            <p>Haz clic en el mapa para añadir un nuevo punto (si no estás dibujando un polígono).</p>
             <button id="loadPointsBtn">Cargar Puntos Existentes</button>
+        </div>
+        <hr>
+        <div class="controls">
+            <h3>Polígonos</h3>
+            <button id="loadPolygonsBtn">Cargar Polígonos Existentes</button>
+            <br><br>
+            <button id="startPolygonBtn">Iniciar Dibujo de Polígono</button>
+            <button id="finishPolygonBtn" disabled>Finalizar Polígono</button>
+            <button id="cancelPolygonBtn" disabled>Cancelar Dibujo</button>
+            <p id="polygonHelpText" style="display: none;">Haz clic en el mapa para añadir vértices al polígono.</p>
         </div>
     </main>
 

@@ -34,6 +34,11 @@ main {
 .controls {
     text-align: center;
     padding: 10px;
+    margin-bottom: 10px;
+}
+
+.controls h3 {
+    margin-top: 0;
 }
 
 .controls button {
@@ -44,10 +49,31 @@ main {
     border-radius: 5px;
     cursor: pointer;
     font-size: 1em;
+    margin: 5px;
 }
 
-.controls button:hover {
+.controls button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.controls button:hover:not(:disabled) {
     background-color: #0056b3;
+}
+
+#polygonHelpText {
+    margin-top: 10px;
+    font-style: italic;
+    color: #555;
+}
+
+hr {
+    width: 80%;
+    max-width: 1000px;
+    margin: 20px auto;
+    border: 0;
+    height: 1px;
+    background-color: #ddd;
 }
 
 footer {
