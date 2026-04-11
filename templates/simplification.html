@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+
+{% block title %}Simplificación - {{ process.name }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('view_process', process_id=process.id) }}">{{ process.name }}</a></li>
+    <li class="breadcrumb-item active">Análisis de Simplificación</li>
+  </ol>
+</nav>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Análisis de Simplificación: {{ process.name }}</h2>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card bg-success text-white p-3 text-center">
+            <h6>Ahorro Potencial Total</h6>
+            <h3>{{ "%.1f"|format(potential_savings) }} <small>min/h</small></h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-primary text-white p-3 text-center">
+            <h6>Reducción de Tiempo</h6>
+            <h3>{{ "%.1f"|format(reduction_pct) }}%</h3>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card bg-dark text-white p-3 text-center">
+            <h6>ROI Estimado (Ahorro $)</h6>
+            <h3>${{ "%.2f"|format(roi_estimado) }}</h3>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">Candidatos a Mejora (NVA / NNVA)</div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Paso</th>
+                                <th>Tipo Actual</th>
+                                <th>Tiempo Actual</th>
+                                <th>Acción</th>
+                                <th>Nuevo Tiempo</th>
+                                <th>Mejora</th>
+                                <th>Impacto (1-10)</th>
+                                <th>Esfuerzo (1-10)</th>
+                                <th>Guardar</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for step in steps %}
+                            <tr class="{% if step.value_type != 'VA' %}table-warning{% endif %}">
+                                <form id="form-{{ step.id }}" action="{{ url_for('update_simplification', step_id=step.id) }}" method="POST"></form>
+                                <td>{{ step.name }}</td>
+                                <td>{{ step.value_type }}</td>
+                                <td>{{ step.cycle_time }}</td>
+                                <td>
+                                    <div class="form-check">
+                                        <input form="form-{{ step.id }}" class="form-check-input" type="checkbox" name="simplify" value="true" {% if step.simplify %}checked{% endif %}>
+                                        <label class="form-check-label">Simplificar</label>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input form="form-{{ step.id }}" type="number" step="0.1" name="new_time" class="form-control form-control-sm" value="{{ step.new_time if step.new_time is not none else step.cycle_time }}">
+                                </td>
+                                <td>
+                                    <select form="form-{{ step.id }}" name="improvement_type" class="form-select form-select-sm">
+                                        <option value="Eliminar" {% if step.improvement_type == 'Eliminar' %}selected{% endif %}>Eliminar</option>
+                                        <option value="Automatizar" {% if step.improvement_type == 'Automatizar' %}selected{% endif %}>Automatizar</option>
+                                        <option value="Delegar" {% if step.improvement_type == 'Delegar' %}selected{% endif %}>Delegar</option>
+                                        <option value="Reducir" {% if step.improvement_type == 'Reducir' %}selected{% endif %}>Reducir</option>
+                                    </select>
+                                </td>
+                                <td>
+                                    <input form="form-{{ step.id }}" type="number" name="impact" class="form-control form-control-sm" value="{{ step.impact }}" min="1" max="10">
+                                </td>
+                                <td>
+                                    <input form="form-{{ step.id }}" type="number" name="effort" class="form-control form-control-sm" value="{{ step.effort }}" min="1" max="10">
+                                </td>
+                                <td>
+                                    <button form="form-{{ step.id }}" type="submit" class="btn btn-sm btn-success"><i class="bi bi-check"></i></button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Impacto vs Esfuerzo (Simulado)</div>
+            <div class="card-body text-center">
+                 <canvas id="impactChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const ctx = document.getElementById('impactChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bubble',
+        data: {
+            datasets: [
+                {% for step in steps if step.simplify %}
+                {
+                    label: '{{ step.name }}',
+                    data: [{
+                        x: {{ step.impact }},
+                        y: {{ step.effort }},
+                        r: 10
+                    }],
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                },
+                {% endfor %}
+            ]
+        },
+        options: {
+            scales: {
+                x: { title: { display: true, text: 'Impacto' }, min: 0, max: 10 },
+                y: { title: { display: true, text: 'Esfuerzo' }, min: 0, max: 10 }
+            }
+        }
+    });
+</script>
+{% endblock %}

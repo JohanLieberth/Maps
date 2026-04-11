@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+
+{% block title %}Matriz RACI - {{ process.name }}{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+    <li class="breadcrumb-item"><a href="{{ url_for('view_process', process_id=process.id) }}">{{ process.name }}</a></li>
+    <li class="breadcrumb-item active">Matriz RACI</li>
+  </ol>
+</nav>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="row mb-4">
+    <div class="col-md-12 d-flex justify-content-between align-items-center">
+        <h2>Matriz RACI: {{ process.name }}</h2>
+        <div>
+                <a href="{{ url_for('export_raci_excel', process_id=process.id) }}" class="btn btn-success">
+                    <i class="bi bi-file-earmark-excel"></i> Excel
+                </a>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addActivityModal">Agregar Actividad</button>
+            <button class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#assignRoleModal">Asignar Rol</button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="text-start">Actividad / Tarea</th>
+                                {% for role in roles %}
+                                <th>{{ role }}</th>
+                                {% endfor %}
+                                <th>Validación</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for activity in activities %}
+                            <tr>
+                                <td class="text-start">{{ activity.name }}</td>
+                                {% for role in roles %}
+                                <td>{{ matrix[activity.id][role] }}</td>
+                                {% endfor %}
+                                <td>
+                                    {% if validations[activity.id]['has_r'] and validations[activity.id]['has_a'] %}
+                                        <span class="badge bg-success">OK</span>
+                                    {% else %}
+                                        {% if not validations[activity.id]['has_r'] %}<span class="badge bg-danger">Falta R</span>{% endif %}
+                                        {% if not validations[activity.id]['has_a'] %}<span class="badge bg-danger">Falta A</span>{% endif %}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+<div class="modal fade" id="addActivityModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('add_activity', process_id=process.id) }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Actividad</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre de la Actividad</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="assignRoleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="" id="assignForm" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Asignar Roles RACI</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Actividad</label>
+                        <select class="form-select" id="activitySelect" onchange="updateFormAction()">
+                            <option value="">Seleccione...</option>
+                            {% for activity in activities %}
+                            <option value="{{ activity.id }}">{{ activity.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Persona / Rol</label>
+                        <input type="text" name="person_role" class="form-control" required placeholder="Ej: Gerente, Juan Perez...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Roles</label><br>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="roles" value="R">
+                            <label class="form-check-label">R (Responsible)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="roles" value="A">
+                            <label class="form-check-label">A (Accountable)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="roles" value="C">
+                            <label class="form-check-label">C (Consulted)</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="checkbox" name="roles" value="I">
+                            <label class="form-check-label">I (Informed)</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Asignar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function updateFormAction() {
+        const activityId = document.getElementById('activitySelect').value;
+        const form = document.getElementById('assignForm');
+        if (activityId) {
+            form.action = "/activity/" + activityId + "/assign";
+        } else {
+            form.action = "";
+        }
+    }
+</script>
+{% endblock %}

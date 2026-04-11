@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ process.name }} - VSM{% endblock %}
+
+{% block content %}
+<nav aria-label="breadcrumb">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Dashboard</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ process.name }}</li>
+  </ol>
+</nav>
+
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h2>Mapa de Valor: {{ process.name }}</h2>
+        <p class="text-muted">Área: {{ process.area }}</p>
+    </div>
+</div>
+
+<!-- Key Metrics Dashboard -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white text-center p-3">
+            <h6>Lead Time Total</h6>
+            <h3>{{ "%.1f"|format(lead_time) }} <small>min/h</small></h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white text-center p-3">
+            <h6>Cycle Time Total</h6>
+            <h3>{{ "%.1f"|format(total_cycle_time) }} <small>min/h</small></h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white text-center p-3">
+            <h6>Eficiencia del Proceso</h6>
+            <h3>{{ "%.1f"|format(efficiency) }}%</h3>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark text-center p-3">
+            <h6>Wait Time Total</h6>
+            <h3>{{ "%.1f"|format(total_wait_time) }} <small>min/h</small></h3>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Steps List and Form -->
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Pasos del Proceso</h5>
+                <div>
+                    <a href="{{ url_for('export_excel', process_id=process.id) }}" class="btn btn-sm btn-success">
+                        <i class="bi bi-file-earmark-excel"></i> Excel
+                    </a>
+                    <a href="{{ url_for('export_pdf', process_id=process.id) }}" class="btn btn-sm btn-danger">
+                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                    </a>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addStepModal">
+                        <i class="bi bi-plus"></i> Agregar Paso
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nombre del Paso</th>
+                                <th>T. Ciclo</th>
+                                <th>T. Espera</th>
+                                <th>Tipo</th>
+                                <th>Calidad</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for step in steps %}
+                            <tr class="{% if step.value_type == 'VA' %}va-color{% elif step.value_type == 'NVA' %}nva-color{% else %}nnva-color{% endif %}">
+                                <td>{{ step.order }}</td>
+                                <td>{{ step.name }}</td>
+                                <td>{{ step.cycle_time }}</td>
+                                <td>{{ step.wait_time }}</td>
+                                <td>{{ step.value_type }}</td>
+                                <td>{{ step.quality_pct }}%</td>
+                                <td>
+                                    <!-- Edit/Delete buttons can go here -->
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">Distribución de Valor</div>
+            <div class="card-body">
+                <canvas id="valueDistChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">Flujo de Procesos (Simplificado)</div>
+            <div class="card-body" style="overflow-x: auto;">
+                 <div class="d-flex align-items-center">
+                     {% for step in steps %}
+                        <div class="text-center p-3 border rounded mx-2 {% if step.value_type == 'VA' %}bg-success-subtle border-success{% elif step.value_type == 'NVA' %}bg-danger-subtle border-danger{% else %}bg-warning-subtle border-warning{% endif %}" style="min-width: 150px;">
+                            <strong>{{ step.name }}</strong><br>
+                            <small>{{ step.cycle_time }} / {{ step.wait_time }}</small>
+                        </div>
+                        {% if not loop.last %}
+                            <i class="bi bi-arrow-right h3 mb-0"></i>
+                        {% endif %}
+                     {% endfor %}
+                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Step Modal -->
+<div class="modal fade" id="addStepModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('add_step', process_id=process.id) }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title">Agregar Paso al Proceso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre del Paso</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tiempo de Ciclo</label>
+                            <input type="number" step="0.1" name="cycle_time" class="form-control" value="0">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Tiempo de Espera</label>
+                            <input type="number" step="0.1" name="wait_time" class="form-control" value="0">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Valor</label>
+                        <select name="value_type" class="form-select">
+                            <option value="VA">Agrega Valor (VA)</option>
+                            <option value="NVA">No Agrega Valor (NVA)</option>
+                            <option value="NNVA">Necesario pero NVA (NNVA)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">% de Calidad (Libre de defectos)</label>
+                        <input type="number" step="1" name="quality_pct" class="form-control" value="100">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Agregar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const ctx = document.getElementById('valueDistChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['VA', 'NVA', 'NNVA'],
+            datasets: [{
+                data: [{{ va_time }}, {{ nva_time }}, {{ nnva_time }}],
+                backgroundColor: ['#198754', '#dc3545', '#ffc107']
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'bottom' }
+            }
+        }
+    });
+</script>
+{% endblock %}

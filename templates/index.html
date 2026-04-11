@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Procesos de Negocio</h1>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProcessModal">
+        <i class="bi bi-plus-lg"></i> Nuevo Proceso
+    </button>
+</div>
+
+<div class="row">
+    {% for process in processes %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="card-title">{{ process.name }}</h5>
+                <h6 class="card-subtitle mb-2 text-muted">{{ process.area }}</h6>
+                <p class="card-text">
+                    <small class="text-muted">Creado: {{ process.date_created.strftime('%Y-%m-%d') }}</small>
+                </p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('view_process', process_id=process.id) }}" class="btn btn-outline-primary btn-sm">Ver VSM</a>
+                    <a href="{{ url_for('simplification_analysis', process_id=process.id) }}" class="btn btn-outline-warning btn-sm">Simplificación</a>
+                    <a href="{{ url_for('raci_matrix', process_id=process.id) }}" class="btn btn-outline-secondary btn-sm">Matriz RACI</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="newProcessModal" tabindex="-1" aria-labelledby="newProcessModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('create_process') }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="newProcessModalLabel">Registrar Nuevo Proceso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Nombre del Proceso</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="area" class="form-label">Área</label>
+                        <input type="text" class="form-control" id="area" name="area">
+                    </div>
+                    <div class="mb-3">
+                        <label for="cost_per_hour" class="form-label">Costo por Hora (USD/Local)</label>
+                        <input type="number" step="0.01" class="form-control" id="cost_per_hour" name="cost_per_hour" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
