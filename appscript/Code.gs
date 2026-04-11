@@ -10,9 +10,36 @@ const SHEETS = {
 };
 
 function getSS() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  if (!ss) throw new Error("No se pudo obtener la hoja de cálculo activa. Asegúrate de que el script esté vinculado a un Google Sheet.");
+  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    // Intentar obtener por ID si es un script independiente (Standalone)
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const spreadsheetId = scriptProperties.getProperty('SPREADSHEET_ID');
+    if (spreadsheetId) {
+      ss = SpreadsheetApp.openById(spreadsheetId);
+    }
+  }
+
+  if (!ss) {
+    throw new Error("No se pudo obtener la hoja de cálculo activa. \n\n" +
+                    "Si estás usando un script independiente: \n" +
+                    "1. Ejecuta la función 'setSpreadsheetId' con el ID de tu hoja.\n" +
+                    "2. O asegúrate de abrir el script desde 'Extensiones > Apps Script' dentro de una hoja de cálculo.");
+  }
   return ss;
+}
+
+/**
+ * Función de utilidad para configurar el ID del Sheet si el script no está vinculado.
+ */
+function setSpreadsheetId() {
+  const ui = SpreadsheetApp.getUi();
+  const response = ui.prompt('Configurar Spreadsheet ID', 'Pega el ID de tu Google Sheet aquí:', ui.ButtonSet.OK_CANCEL);
+  if (response.getSelectedButton() == ui.Button.OK) {
+    const id = response.getResponseText();
+    PropertiesService.getScriptProperties().setProperty('SPREADSHEET_ID', id);
+    ui.alert('ID guardado correctamente.');
+  }
 }
 
 function onOpen() {

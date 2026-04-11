@@ -2,11 +2,11 @@
 
 Este sistema permite gestionar procesos de negocio directamente desde un Google Sheet.
 
-## Pasos para la Instalación
+## Pasos para la Instalación (Script Vinculado - RECOMENDADO)
 
 1.  **Crear un nuevo Google Sheet.**
 2.  **Abrir el editor de scripts:**
-    - Ve a `Extensiones` > `Apps Script`.
+    - Dentro del Sheet, ve a `Extensiones` > `Apps Script`. Esto vincula el script automáticamente al Sheet.
 3.  **Copiar el código del servidor:**
     - Borra el contenido de `Código.gs` y pega el contenido de `appscript/Code.gs`.
 4.  **Crear el archivo de interfaz:**
@@ -21,6 +21,19 @@ Este sistema permite gestionar procesos de negocio directamente desde un Google 
     - Verás un nuevo menú llamado `BPM System`.
     - Haz clic en `BPM System` > `Abrir App`.
     - También puedes desplegarlo como "Aplicación Web" desde el botón `Implementar` > `Nueva implementación`.
+
+## Solución de Errores Comunes
+
+### Error: "No se pudo obtener la hoja de cálculo activa"
+Este error ocurre si el script es "independiente" (Standalone) y no está dentro de un Google Sheet.
+
+**Solución 1 (Recomendada):**
+Crea el script desde adentro de un Google Sheet (`Extensiones > Apps Script`).
+
+**Solución 2 (Para Scripts Independientes):**
+1. Copia el ID de tu Google Sheet (está en la URL: `docs.google.com/spreadsheets/d/ID_AQUÍ/edit`).
+2. En el editor de Apps Script, selecciona la función `setSpreadsheetId` y dale a `Ejecutar`.
+3. Pega el ID cuando se te solicite.
 
 ## Funcionalidades Incluidas
 
