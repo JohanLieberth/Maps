@@ -3,12 +3,17 @@
  * Logic for managing data in Google Sheets
  */
 
-const SS = SpreadsheetApp.getActiveSpreadsheet();
 const SHEETS = {
   PROCESSES: 'Procesos',
   STEPS: 'Pasos',
   RACI: 'RACI'
 };
+
+function getSS() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) throw new Error("No se pudo obtener la hoja de cálculo activa. Asegúrate de que el script esté vinculado a un Google Sheet.");
+  return ss;
+}
 
 function onOpen() {
   SpreadsheetApp.getUi()
@@ -32,9 +37,10 @@ function doGet() {
 }
 
 function initSheets() {
+  const ss = getSS();
   Object.values(SHEETS).forEach(name => {
-    if (!SS.getSheetByName(name)) {
-      const sheet = SS.insertSheet(name);
+    if (!ss.getSheetByName(name)) {
+      const sheet = ss.insertSheet(name);
       if (name === SHEETS.PROCESSES) {
         sheet.appendRow(['ID', 'Nombre', 'Área', 'Fecha', 'Estado', 'Costo_Por_Hora']);
       } else if (name === SHEETS.STEPS) {
@@ -48,7 +54,8 @@ function initSheets() {
 
 // Data fetching helpers
 function getData(sheetName) {
-  const sheet = SS.getSheetByName(sheetName);
+  const ss = getSS();
+  const sheet = ss.getSheetByName(sheetName);
   if (!sheet) return [];
   const data = sheet.getDataRange().getValues();
   const headers = data.shift();
@@ -73,14 +80,16 @@ function getRaci(processId) {
 
 // Creation functions
 function createProcess(name, area, cost) {
-  const sheet = SS.getSheetByName(SHEETS.PROCESSES);
+  const ss = getSS();
+  const sheet = ss.getSheetByName(SHEETS.PROCESSES);
   const id = new Date().getTime();
   sheet.appendRow([id, name, area, new Date(), 'Activo', cost]);
   return id;
 }
 
 function addStep(processId, stepData) {
-  const sheet = SS.getSheetByName(SHEETS.STEPS);
+  const ss = getSS();
+  const sheet = ss.getSheetByName(SHEETS.STEPS);
   const id = new Date().getTime();
   sheet.appendRow([
     id, processId, stepData.order, stepData.name, stepData.cycle_time,
@@ -91,7 +100,8 @@ function addStep(processId, stepData) {
 }
 
 function updateStepSimplification(stepId, data) {
-  const sheet = SS.getSheetByName(SHEETS.STEPS);
+  const ss = getSS();
+  const sheet = ss.getSheetByName(SHEETS.STEPS);
   const rows = sheet.getDataRange().getValues();
   for (let i = 1; i < rows.length; i++) {
     if (rows[i][0] == stepId) {
@@ -104,7 +114,8 @@ function updateStepSimplification(stepId, data) {
 }
 
 function saveRaciAssignment(processId, activity, persona, roles) {
-  const sheet = SS.getSheetByName(SHEETS.RACI);
+  const ss = getSS();
+  const sheet = ss.getSheetByName(SHEETS.RACI);
   const rows = sheet.getDataRange().getValues();
   let found = false;
   const id = new Date().getTime();

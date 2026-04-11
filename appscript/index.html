@@ -300,10 +300,10 @@
           const ass = raciData.find(r => r.Actividad == a && r.Persona == p);
           let val = [];
           if (ass) {
-            if (ass.R == true) { val.append('R'); hasR = true; }
-            if (ass.A == true) { val.append('A'); hasA = true; }
-            if (ass.C == true) { val.append('C'); }
-            if (ass.I == true) { val.append('I'); }
+            if (ass.R === true || ass.R === 'TRUE') { val.push('R'); hasR = true; }
+            if (ass.A === true || ass.A === 'TRUE') { val.push('A'); hasA = true; }
+            if (ass.C === true || ass.C === 'TRUE') { val.push('C'); }
+            if (ass.I === true || ass.I === 'TRUE') { val.push('I'); }
           }
           html += `<td>${val.join(',')}</td>`;
         });
@@ -359,8 +359,6 @@
       google.script.run.withSuccessHandler(() => { loadProcess(currentProcessId); bootstrap.Modal.getInstance(document.getElementById('raciModal')).hide(); }).saveRaciAssignment(currentProcessId, act, per, roles);
     }
 
-    // Array polyfill for RACI
-    if (!Array.prototype.append) { Array.prototype.append = Array.prototype.push; }
 
   </script>
 </body>
