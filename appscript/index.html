@@ -161,30 +161,56 @@
     let impactChart = null;
 
     // Initialization
-    window.onload = () => {
+    window.onload = () => { initApp(); };
+
+    let loadingCount = 0;
+    function toggleLoading(show) {
+      if (show) loadingCount++;
+      else loadingCount = Math.max(0, loadingCount - 1);
+
+      const loader = document.getElementById('loading');
+      if (loader) loader.style.display = loadingCount > 0 ? 'flex' : 'none';
+
+      // Safety timeout: if it stays loading more than 15s, hide it.
+      if (show) {
+        setTimeout(() => {
+          if (loadingCount > 0) {
+            console.warn("Loading timeout reached");
+            loadingCount = 0;
+            if (loader) loader.style.display = 'none';
+          }
+        }, 15000);
+      }
+    }
+
+    function initApp() {
+      console.log("Initializing App...");
       toggleLoading(true);
       google.script.run
         .withSuccessHandler(p => {
-          processes = p;
+          console.log("Processes loaded:", p);
+          processes = p || [];
           const sel = document.getElementById('process-selector');
           sel.innerHTML = '<option value="">Seleccione Proceso...</option>';
-          p.forEach(proc => {
+          processes.forEach(proc => {
             const opt = document.createElement('option');
             opt.value = proc.ID;
             opt.textContent = proc.Nombre;
             sel.appendChild(opt);
           });
+
+          if (currentProcessId) {
+            sel.value = currentProcessId;
+            renderApp();
+          }
           toggleLoading(false);
         })
         .withFailureHandler(err => {
+          console.error("Init Error:", err);
           alert("Error cargando procesos: " + err.message);
           toggleLoading(false);
         })
         .getProcesses();
-    };
-
-    function toggleLoading(show) {
-      document.getElementById('loading').style.display = show ? 'flex' : 'none';
     }
 
     function loadProcess(id) {
@@ -201,8 +227,8 @@
           steps = data.steps || [];
           raciData = data.raci || [];
           try {
-            renderApp();
             document.getElementById('main-content').style.display = 'block';
+            renderApp();
           } catch (e) {
             console.error("Render error:", e);
             alert("Error al mostrar los datos: " + e.message);
@@ -218,15 +244,20 @@
     }
 
     function renderApp() {
-      if (!processes || processes.length === 0) return;
-      const process = processes.find(p => String(p.ID) === String(currentProcessId));
-      if (!process) {
-        console.error("Process not found:", currentProcessId);
+      console.log("Rendering App...");
+      if (!processes || processes.length === 0) {
+        console.warn("No processes available to render");
         return;
       }
-      renderVSM(process);
-      renderSimplification(process);
-      renderRaci();
+      const process = processes.find(p => String(p.ID) === String(currentProcessId));
+      if (!process) {
+        console.error("Process not found in local state:", currentProcessId);
+        return;
+      }
+
+      try { renderVSM(process); } catch(e) { console.error("VSM Render Error:", e); }
+      try { renderSimplification(process); } catch(e) { console.error("Simplification Render Error:", e); }
+      try { renderRaci(); } catch(e) { console.error("RACI Render Error:", e); }
     }
 
     function renderVSM(process) {
@@ -360,12 +391,21 @@
 
       toggleLoading(true);
       google.script.run
-        .withSuccessHandler(() => {
-          // Re-load processes instead of full reload to be more GAS-friendly
-          window.onload();
+        .withSuccessHandler(newId => {
+          console.log("Process created ID:", newId);
+          // Actualizamos la lista y cargamos el nuevo proceso automáticamente
+          currentProcessId = String(newId);
+          initApp();
+          loadProcess(newId);
+
           bootstrap.Modal.getInstance(document.getElementById('newProcessModal')).hide();
+          // Clear inputs
+          document.getElementById('new-p-name').value = '';
+          document.getElementById('new-p-area').value = '';
+          document.getElementById('new-p-cost').value = '0';
         })
         .withFailureHandler(err => {
+          console.error("Create Error:", err);
           alert("Error al crear proceso: " + err.message);
           toggleLoading(false);
         })

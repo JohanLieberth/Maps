@@ -64,10 +64,14 @@ function doGet() {
 }
 
 function initSheets() {
+  const props = PropertiesService.getScriptProperties();
+  if (props.getProperty('INITIALIZED') === 'true') return;
+
   const ss = getSS();
   Object.values(SHEETS).forEach(name => {
-    if (!ss.getSheetByName(name)) {
-      const sheet = ss.insertSheet(name);
+    let sheet = ss.getSheetByName(name);
+    if (!sheet) {
+      sheet = ss.insertSheet(name);
       if (name === SHEETS.PROCESSES) {
         sheet.appendRow(['ID', 'Nombre', 'Área', 'Fecha', 'Estado', 'Costo_Por_Hora']);
       } else if (name === SHEETS.STEPS) {
@@ -75,8 +79,10 @@ function initSheets() {
       } else if (name === SHEETS.RACI) {
         sheet.appendRow(['ID', 'Proceso_ID', 'Actividad', 'Persona', 'R', 'A', 'C', 'I']);
       }
+      SpreadsheetApp.flush();
     }
   });
+  props.setProperty('INITIALIZED', 'true');
 }
 
 // Data fetching helpers
@@ -84,11 +90,23 @@ function getData(sheetName) {
   const ss = getSS();
   const sheet = ss.getSheetByName(sheetName);
   if (!sheet) return [];
-  const data = sheet.getDataRange().getValues();
+
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+
+  if (lastRow < 1 || lastCol < 1) return [];
+
+  const data = sheet.getRange(1, 1, lastRow, lastCol).getValues();
+  if (data.length <= 1) return []; // Solo encabezados
+
   const headers = data.shift();
   return data.map(row => {
     const obj = {};
-    headers.forEach((h, i) => obj[h] = row[i]);
+    headers.forEach((h, i) => {
+      let val = row[i];
+      if (val instanceof Date) val = val.toISOString();
+      obj[h] = val;
+    });
     return obj;
   });
 }
@@ -114,7 +132,7 @@ function createProcess(name, area, cost) {
   const ss = getSS();
   const sheet = ss.getSheetByName(SHEETS.PROCESSES);
   const id = String(new Date().getTime());
-  sheet.appendRow([id, name, area, new Date(), 'Activo', cost]);
+  sheet.appendRow([id, String(name), String(area), new Date(), 'Activo', Number(cost || 0)]);
   SpreadsheetApp.flush();
   return id;
 }
@@ -124,9 +142,19 @@ function addStep(processId, stepData) {
   const sheet = ss.getSheetByName(SHEETS.STEPS);
   const id = String(new Date().getTime());
   sheet.appendRow([
-    id, String(processId), stepData.order, stepData.name, stepData.cycle_time,
-    stepData.wait_time, stepData.value_type, stepData.quality, false,
-    stepData.cycle_time, 5, 5, ''
+    id,
+    String(processId),
+    Number(stepData.order || 0),
+    String(stepData.name),
+    Number(stepData.cycle_time || 0),
+    Number(stepData.wait_time || 0),
+    String(stepData.value_type),
+    Number(stepData.quality || 100),
+    false,
+    Number(stepData.cycle_time || 0),
+    5,
+    5,
+    ''
   ]);
   SpreadsheetApp.flush();
   return id;
