@@ -192,40 +192,45 @@
         document.getElementById('main-content').style.display = 'none';
         return;
       }
-      currentProcessId = id;
+      console.log("Loading process:", id);
+      currentProcessId = String(id);
       toggleLoading(true);
       google.script.run
-        .withSuccessHandler(s => {
-          steps = s;
-          google.script.run
-            .withSuccessHandler(r => {
-              raciData = r;
-              renderApp();
-              toggleLoading(false);
-              document.getElementById('main-content').style.display = 'block';
-            })
-            .withFailureHandler(err => {
-              alert("Error cargando RACI: " + err.message);
-              toggleLoading(false);
-            })
-            .getRaci(currentProcessId);
-        })
-        .withFailureHandler(err => {
-          alert("Error cargando pasos: " + err.message);
+        .withSuccessHandler(data => {
+          console.log("Data received:", data);
+          steps = data.steps || [];
+          raciData = data.raci || [];
+          try {
+            renderApp();
+            document.getElementById('main-content').style.display = 'block';
+          } catch (e) {
+            console.error("Render error:", e);
+            alert("Error al mostrar los datos: " + e.message);
+          }
           toggleLoading(false);
         })
-        .getSteps(currentProcessId);
+        .withFailureHandler(err => {
+          console.error("Server error:", err);
+          alert("Error cargando datos del proceso: " + err.message);
+          toggleLoading(false);
+        })
+        .getProcessData(currentProcessId);
     }
 
     function renderApp() {
-      const process = processes.find(p => p.ID == currentProcessId);
+      if (!processes || processes.length === 0) return;
+      const process = processes.find(p => String(p.ID) === String(currentProcessId));
+      if (!process) {
+        console.error("Process not found:", currentProcessId);
+        return;
+      }
       renderVSM(process);
       renderSimplification(process);
       renderRaci();
     }
 
     function renderVSM(process) {
-      const tCycle = steps.reduce((a, b) => a + Number(b.Tiempo_Ciclo), 0);
+      const tCycle = steps.reduce((a, b) => a + Number(b.Tiempo_Ciclo || 0), 0);
       const tWait = steps.reduce((a, b) => a + Number(b.Tiempo_Wait || b.Tiempo_Espera || 0), 0);
       const leadTime = tCycle + tWait;
       const vaTime = steps.filter(s => s.Tipo_Valor == 'VA').reduce((a, b) => a + Number(b.Tiempo_Ciclo), 0);
@@ -265,9 +270,12 @@
     }
 
     function renderSimplification(process) {
-       const totalTime = steps.reduce((a, b) => a + Number(b.Tiempo_Ciclo), 0);
+       const totalTime = steps.reduce((a, b) => a + Number(b.Tiempo_Ciclo || 0), 0);
        let savings = 0;
-       steps.forEach(s => { if(s.Simplificar == true) savings += (Number(s.Tiempo_Ciclo) - Number(s.Tiempo_Nuevo)); });
+       steps.forEach(s => {
+         if(s.Simplificar === true || s.Simplificar === "TRUE")
+            savings += (Number(s.Tiempo_Ciclo || 0) - Number(s.Tiempo_Nuevo || 0));
+       });
        const reduction = totalTime > 0 ? (savings / totalTime * 100) : 0;
        const roi = (savings / 60) * (process.Costo_Por_Hora || 0);
 
@@ -293,9 +301,9 @@
     }
 
     function renderImpactChart() {
-       const data = steps.filter(s => s.Simplificar == true).map(s => ({
+       const data = steps.filter(s => s.Simplificar === true || s.Simplificar === "TRUE").map(s => ({
          label: s.Nombre,
-         data: [{ x: s.Impacto, y: s.Esfuerzo, r: 10 }],
+         data: [{ x: Number(s.Impacto || 5), y: Number(s.Esfuerzo || 5), r: 10 }],
          backgroundColor: 'rgba(54, 162, 235, 0.5)'
        }));
 
@@ -308,8 +316,12 @@
     }
 
     function renderRaci() {
-      const activities = [...new Set(raciData.map(r => r.Actividad))];
-      const personas = [...new Set(raciData.map(r => r.Persona))];
+      if (!raciData || raciData.length === 0) {
+        document.getElementById('raci-matrix-container').innerHTML = '<div class="p-3 text-muted">No hay asignaciones RACI aún.</div>';
+        return;
+      }
+      const activities = [...new Set(raciData.map(r => r.Actividad))].filter(Boolean);
+      const personas = [...new Set(raciData.map(r => r.Persona))].filter(Boolean);
 
       let html = '<table class="table table-bordered table-sm text-center"><thead class="table-dark"><tr><th>Actividad</th>';
       personas.forEach(p => html += `<th>${p}</th>`);
@@ -319,7 +331,7 @@
         html += `<tr><td class="text-start">${a}</td>`;
         let hasR = false, hasA = false;
         personas.forEach(p => {
-          const ass = raciData.find(r => r.Actividad == a && r.Persona == p);
+          const ass = raciData.find(r => String(r.Actividad) === String(a) && String(r.Persona) === String(p));
           let val = [];
           if (ass) {
             if (ass.R === true || ass.R === 'TRUE') { val.push('R'); hasR = true; }

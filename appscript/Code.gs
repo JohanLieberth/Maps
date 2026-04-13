@@ -98,32 +98,37 @@ function getProcesses() {
   return getData(SHEETS.PROCESSES);
 }
 
-function getSteps(processId) {
-  return getData(SHEETS.STEPS).filter(s => s.Proceso_ID == processId).sort((a,b) => a.Orden - b.Orden);
-}
+function getProcessData(processId) {
+  if (!processId) return { steps: [], raci: [] };
+  const steps = getData(SHEETS.STEPS)
+    .filter(s => String(s.Proceso_ID) === String(processId))
+    .sort((a,b) => Number(a.Orden) - Number(b.Orden));
+  const raci = getData(SHEETS.RACI)
+    .filter(r => String(r.Proceso_ID) === String(processId));
 
-function getRaci(processId) {
-  return getData(SHEETS.RACI).filter(r => r.Proceso_ID == processId);
+  return { steps: steps, raci: raci };
 }
 
 // Creation functions
 function createProcess(name, area, cost) {
   const ss = getSS();
   const sheet = ss.getSheetByName(SHEETS.PROCESSES);
-  const id = new Date().getTime();
+  const id = String(new Date().getTime());
   sheet.appendRow([id, name, area, new Date(), 'Activo', cost]);
+  SpreadsheetApp.flush();
   return id;
 }
 
 function addStep(processId, stepData) {
   const ss = getSS();
   const sheet = ss.getSheetByName(SHEETS.STEPS);
-  const id = new Date().getTime();
+  const id = String(new Date().getTime());
   sheet.appendRow([
-    id, processId, stepData.order, stepData.name, stepData.cycle_time,
+    id, String(processId), stepData.order, stepData.name, stepData.cycle_time,
     stepData.wait_time, stepData.value_type, stepData.quality, false,
     stepData.cycle_time, 5, 5, ''
   ]);
+  SpreadsheetApp.flush();
   return id;
 }
 
@@ -132,13 +137,14 @@ function updateStepSimplification(stepId, data) {
   const sheet = ss.getSheetByName(SHEETS.STEPS);
   const rows = sheet.getDataRange().getValues();
   for (let i = 1; i < rows.length; i++) {
-    if (rows[i][0] == stepId) {
+    if (String(rows[i][0]) === String(stepId)) {
       sheet.getRange(i + 1, 9, 1, 5).setValues([[
         data.simplify, data.new_time, data.impact, data.effort, data.improvement_type
       ]]);
       break;
     }
   }
+  SpreadsheetApp.flush();
 }
 
 function saveRaciAssignment(processId, activity, persona, roles) {
@@ -146,10 +152,10 @@ function saveRaciAssignment(processId, activity, persona, roles) {
   const sheet = ss.getSheetByName(SHEETS.RACI);
   const rows = sheet.getDataRange().getValues();
   let found = false;
-  const id = new Date().getTime();
+  const id = String(new Date().getTime());
 
   for (let i = 1; i < rows.length; i++) {
-    if (rows[i][1] == processId && rows[i][2] == activity && rows[i][3] == persona) {
+    if (String(rows[i][1]) === String(processId) && rows[i][2] == activity && rows[i][3] == persona) {
       sheet.getRange(i + 1, 5, 1, 4).setValues([[
         roles.includes('R'), roles.includes('A'), roles.includes('C'), roles.includes('I')
       ]]);
@@ -160,8 +166,9 @@ function saveRaciAssignment(processId, activity, persona, roles) {
 
   if (!found) {
     sheet.appendRow([
-      id, processId, activity, persona,
+      id, String(processId), activity, persona,
       roles.includes('R'), roles.includes('A'), roles.includes('C'), roles.includes('I')
     ]);
   }
+  SpreadsheetApp.flush();
 }
