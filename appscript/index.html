@@ -163,17 +163,24 @@
     // Initialization
     window.onload = () => {
       toggleLoading(true);
-      google.script.run.withSuccessHandler(p => {
-        processes = p;
-        const sel = document.getElementById('process-selector');
-        p.forEach(proc => {
-          const opt = document.createElement('option');
-          opt.value = proc.ID;
-          opt.textContent = proc.Nombre;
-          sel.appendChild(opt);
-        });
-        toggleLoading(false);
-      }).getProcesses();
+      google.script.run
+        .withSuccessHandler(p => {
+          processes = p;
+          const sel = document.getElementById('process-selector');
+          sel.innerHTML = '<option value="">Seleccione Proceso...</option>';
+          p.forEach(proc => {
+            const opt = document.createElement('option');
+            opt.value = proc.ID;
+            opt.textContent = proc.Nombre;
+            sel.appendChild(opt);
+          });
+          toggleLoading(false);
+        })
+        .withFailureHandler(err => {
+          alert("Error cargando procesos: " + err.message);
+          toggleLoading(false);
+        })
+        .getProcesses();
     };
 
     function toggleLoading(show) {
@@ -181,18 +188,33 @@
     }
 
     function loadProcess(id) {
-      if (!id) return;
+      if (!id) {
+        document.getElementById('main-content').style.display = 'none';
+        return;
+      }
       currentProcessId = id;
       toggleLoading(true);
-      google.script.run.withSuccessHandler(s => {
-        steps = s;
-        google.script.run.withSuccessHandler(r => {
-          raciData = r;
-          renderApp();
+      google.script.run
+        .withSuccessHandler(s => {
+          steps = s;
+          google.script.run
+            .withSuccessHandler(r => {
+              raciData = r;
+              renderApp();
+              toggleLoading(false);
+              document.getElementById('main-content').style.display = 'block';
+            })
+            .withFailureHandler(err => {
+              alert("Error cargando RACI: " + err.message);
+              toggleLoading(false);
+            })
+            .getRaci(currentProcessId);
+        })
+        .withFailureHandler(err => {
+          alert("Error cargando pasos: " + err.message);
           toggleLoading(false);
-          document.getElementById('main-content').style.display = 'block';
-        }).getRaci(currentProcessId);
-      }).getSteps(currentProcessId);
+        })
+        .getSteps(currentProcessId);
     }
 
     function renderApp() {
@@ -322,41 +344,81 @@
       const name = document.getElementById('new-p-name').value;
       const area = document.getElementById('new-p-area').value;
       const cost = document.getElementById('new-p-cost').value;
+      if (!name) { alert("El nombre es requerido"); return; }
+
       toggleLoading(true);
-      google.script.run.withSuccessHandler(() => { window.location.reload(); }).createProcess(name, area, cost);
+      google.script.run
+        .withSuccessHandler(() => {
+          // Re-load processes instead of full reload to be more GAS-friendly
+          window.onload();
+          bootstrap.Modal.getInstance(document.getElementById('newProcessModal')).hide();
+        })
+        .withFailureHandler(err => {
+          alert("Error al crear proceso: " + err.message);
+          toggleLoading(false);
+        })
+        .createProcess(name, area, cost);
     }
 
     function handleAddStep() {
       const data = {
         name: document.getElementById('step-name').value,
-        cycle_time: document.getElementById('step-cycle').value,
-        wait_time: document.getElementById('step-wait').value,
+        cycle_time: document.getElementById('step-cycle').value || 0,
+        wait_time: document.getElementById('step-wait').value || 0,
         value_type: document.getElementById('step-type').value,
-        quality: document.getElementById('step-quality').value,
+        quality: document.getElementById('step-quality').value || 100,
         order: steps.length + 1
       };
+      if (!data.name) { alert("El nombre del paso es requerido"); return; }
+
       toggleLoading(true);
-      google.script.run.withSuccessHandler(() => { loadProcess(currentProcessId); bootstrap.Modal.getInstance(document.getElementById('addStepModal')).hide(); }).addStep(currentProcessId, data);
+      google.script.run
+        .withSuccessHandler(() => {
+          loadProcess(currentProcessId);
+          bootstrap.Modal.getInstance(document.getElementById('addStepModal')).hide();
+        })
+        .withFailureHandler(err => {
+          alert("Error al agregar paso: " + err.message);
+          toggleLoading(false);
+        })
+        .addStep(currentProcessId, data);
     }
 
     function saveSim(stepId) {
       const data = {
         simplify: true,
-        new_time: document.getElementById(`new-t-${stepId}`).value,
+        new_time: document.getElementById(`new-t-${stepId}`).value || 0,
         improvement_type: document.getElementById(`imp-type-${stepId}`).value,
-        impact: document.getElementById(`imp-${stepId}`).value,
-        effort: document.getElementById(`esf-${stepId}`).value
+        impact: document.getElementById(`imp-${stepId}`).value || 5,
+        effort: document.getElementById(`esf-${stepId}`).value || 5
       };
       toggleLoading(true);
-      google.script.run.withSuccessHandler(() => { loadProcess(currentProcessId); }).updateStepSimplification(stepId, data);
+      google.script.run
+        .withSuccessHandler(() => { loadProcess(currentProcessId); })
+        .withFailureHandler(err => {
+          alert("Error al guardar simplificación: " + err.message);
+          toggleLoading(false);
+        })
+        .updateStepSimplification(stepId, data);
     }
 
     function handleSaveRaci() {
       const act = document.getElementById('raci-activity').value;
       const per = document.getElementById('raci-persona').value;
       const roles = Array.from(document.querySelectorAll('input[name="raci-role"]:checked')).map(c => c.value);
+      if (!act || !per) { alert("Actividad y Persona son requeridos"); return; }
+
       toggleLoading(true);
-      google.script.run.withSuccessHandler(() => { loadProcess(currentProcessId); bootstrap.Modal.getInstance(document.getElementById('raciModal')).hide(); }).saveRaciAssignment(currentProcessId, act, per, roles);
+      google.script.run
+        .withSuccessHandler(() => {
+          loadProcess(currentProcessId);
+          bootstrap.Modal.getInstance(document.getElementById('raciModal')).hide();
+        })
+        .withFailureHandler(err => {
+          alert("Error al guardar RACI: " + err.message);
+          toggleLoading(false);
+        })
+        .saveRaciAssignment(currentProcessId, act, per, roles);
     }
 
 

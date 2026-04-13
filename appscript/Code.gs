@@ -94,6 +94,7 @@ function getData(sheetName) {
 }
 
 function getProcesses() {
+  initSheets(); // Ensure sheets exist
   return getData(SHEETS.PROCESSES);
 }
 
