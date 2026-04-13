@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <style>
+    body { font-size: 0.9rem; background-color: #f4f7f6; }
+    .nav-tabs .nav-link { color: #495057; }
+    .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); margin-bottom: 1rem; }
+    .status-va { background-color: #d1e7dd; }
+    .status-nva { background-color: #f8d7da; }
+    .status-nnva { background-color: #fff3cd; }
+    #loading { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: none; align-items: center; justify-content: center; }
+  </style>
+</head>
+<body>
+  <div id="loading"><div class="spinner-border text-primary"></div></div>
+
+  <div class="container-fluid py-3">
+    <header class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
+      <h3 class="text-primary"><i class="bi bi-diagram-3"></i> Sistema BPM</h3>
+      <div id="process-selector-container">
+          <select id="process-selector" class="form-select form-select-sm" onchange="loadProcess(this.value)">
+            <option value="">Seleccione Proceso...</option>
+          </select>
+      </div>
+      <button class="btn btn-sm btn-outline-primary" onclick="showNewProcessModal()"><i class="bi bi-plus"></i> Nuevo</button>
+    </header>
+
+    <div id="main-content" style="display:none;">
+      <ul class="nav nav-tabs mb-3" id="mainTabs" role="tablist">
+        <li class="nav-item">
+          <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#vsm-tab">Mapa de Valor</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#simplification-tab">Simplificación</button>
+        </li>
+        <li class="nav-item">
+          <button class="nav-link" data-bs-toggle="tab" data-bs-target="#raci-tab">Matriz RACI</button>
+        </li>
+      </ul>
+
+      <div class="tab-content">
+        <!-- VSM TAB -->
+        <div class="tab-pane fade show active" id="vsm-tab">
+          <div class="row g-3 mb-3" id="vsm-metrics"></div>
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <span>Pasos del Proceso</span>
+              <button class="btn btn-sm btn-primary" onclick="showAddStepModal()">+ Agregar Paso</button>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr><th>#</th><th>Nombre</th><th>Ciclo</th><th>Espera</th><th>Tipo</th><th>Calidad</th></tr>
+                  </thead>
+                  <tbody id="steps-table-body"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6"><div class="card p-3"><canvas id="vsmChart"></canvas></div></div>
+            <div class="col-md-6"><div class="card p-3"><div id="process-flow"></div></div></div>
+          </div>
+        </div>
+
+        <!-- SIMPLIFICATION TAB -->
+        <div class="tab-pane fade" id="simplification-tab">
+           <div class="row g-3 mb-3" id="sim-metrics"></div>
+           <div class="card">
+             <div class="card-body p-0">
+               <table class="table table-sm">
+                 <thead><tr><th>Paso</th><th>Actual</th><th>Nuevo T.</th><th>Mejora</th><th>Imp.</th><th>Esf.</th><th>Ok</th></tr></thead>
+                 <tbody id="sim-table-body"></tbody>
+               </table>
+             </div>
+           </div>
+           <div class="card p-3"><canvas id="impactEffortChart"></canvas></div>
+        </div>
+
+        <!-- RACI TAB -->
+        <div class="tab-pane fade" id="raci-tab">
+           <div class="d-flex justify-content-end mb-2">
+             <button class="btn btn-sm btn-secondary me-2" onclick="showRaciModal()">Asignar RACI</button>
+           </div>
+           <div class="card">
+             <div class="card-body p-0" id="raci-matrix-container"></div>
+           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal fade" id="newProcessModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5>Nuevo Proceso</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <input type="text" id="new-p-name" class="form-control mb-2" placeholder="Nombre">
+          <input type="text" id="new-p-area" class="form-control mb-2" placeholder="Área">
+          <input type="number" id="new-p-cost" class="form-control" placeholder="Costo por Hora">
+        </div>
+        <div class="modal-footer"><button class="btn btn-primary" onclick="handleCreateProcess()">Guardar</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="addStepModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5>Agregar Paso</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <input type="text" id="step-name" class="form-control mb-2" placeholder="Nombre del Paso">
+          <div class="row">
+            <div class="col"><input type="number" id="step-cycle" class="form-control mb-2" placeholder="Ciclo"></div>
+            <div class="col"><input type="number" id="step-wait" class="form-control mb-2" placeholder="Espera"></div>
+          </div>
+          <select id="step-type" class="form-select mb-2">
+            <option value="VA">VA (Agrega Valor)</option>
+            <option value="NVA">NVA (No Agrega Valor)</option>
+            <option value="NNVA">NNVA (Necesario pero NVA)</option>
+          </select>
+          <input type="number" id="step-quality" class="form-control" value="100" placeholder="Calidad %">
+        </div>
+        <div class="modal-footer"><button class="btn btn-primary" onclick="handleAddStep()">Agregar</button></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="raciModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header"><h5>Asignación RACI</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+          <input type="text" id="raci-activity" class="form-control mb-2" placeholder="Actividad / Tarea">
+          <input type="text" id="raci-persona" class="form-control mb-2" placeholder="Persona / Rol">
+          <div class="d-flex justify-content-around mt-2">
+            <label><input type="checkbox" name="raci-role" value="R"> R</label>
+            <label><input type="checkbox" name="raci-role" value="A"> A</label>
+            <label><input type="checkbox" name="raci-role" value="C"> C</label>
+            <label><input type="checkbox" name="raci-role" value="I"> I</label>
+          </div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-primary" onclick="handleSaveRaci()">Guardar</button></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    let currentProcessId = null;
+    let processes = [];
+    let steps = [];
+    let raciData = [];
+    let vsmChart = null;
+    let impactChart = null;
+
+    // Initialization
+    window.onload = () => { initApp(); };
+
+    let loadingCount = 0;
+    function toggleLoading(show) {
+      if (show) loadingCount++;
+      else loadingCount = Math.max(0, loadingCount - 1);
+
+      const loader = document.getElementById('loading');
+      if (loader) loader.style.display = loadingCount > 0 ? 'flex' : 'none';
+
+      // Safety timeout: if it stays loading more than 15s, hide it.
+      if (show) {
+        setTimeout(() => {
+          if (loadingCount > 0) {
+            console.warn("Loading timeout reached");
+            loadingCount = 0;
+            if (loader) loader.style.display = 'none';
+          }
+        }, 15000);
+      }
+    }
+
+    function initApp() {
+      console.log("Initializing App...");
+      toggleLoading(true);
+      google.script.run
+        .withSuccessHandler(p => {
+          console.log("Processes loaded:", p);
+          processes = p || [];
+          const sel = document.getElementById('process-selector');
+          sel.innerHTML = '<option value="">Seleccione Proceso...</option>';
+          processes.forEach(proc => {
+            const opt = document.createElement('option');
+            opt.value = proc.ID;
+            opt.textContent = proc.Nombre;
+            sel.appendChild(opt);
+          });
+
+          if (currentProcessId) {
+            sel.value = currentProcessId;
+            renderApp();
+          }
+          toggleLoading(false);
+        })
+        .withFailureHandler(err => {
+          console.error("Init Error:", err);
+          alert("Error cargando procesos: " + err.message);
+          toggleLoading(false);
+        })
+        .getProcesses();
+    }
+
+    function loadProcess(id) {
+      if (!id) {
+        document.getElementById('main-content').style.display = 'none';
+        return;
+      }
+      console.log("Loading process:", id);
+      currentProcessId = String(id);
+      toggleLoading(true);
+      google.script.run
+        .withSuccessHandler(data => {
+          console.log("Data received:", data);
+          steps = data.steps || [];
+          raciData = data.raci || [];
+          try {
+            document.getElementById('main-content').style.display = 'block';
+            renderApp();
+          } catch (e) {
+            console.error("Render error:", e);
+            alert("Error al mostrar los datos: " + e.message);
+          }
+          toggleLoading(false);
+        })
+        .withFailureHandler(err => {
+          console.error("Server error:", err);
+          alert("Error cargando datos del proceso: " + err.message);
+          toggleLoading(false);
+        })
+        .getProcessData(currentProcessId);
+    }
+
+    function renderApp() {
+      console.log("Rendering App...");
+      if (!processes || processes.length === 0) {
+        console.warn("No processes available to render");
+        return;
+      }
+      const process = processes.find(p => String(p.ID) === String(currentProcessId));
+      if (!process) {
+        console.error("Process not found in local state:", currentProcessId);
+        return;
+      }
+
+      try { renderVSM(process); } catch(e) { console.error("VSM Render Error:", e); }
+      try { renderSimplification(process); } catch(e) { console.error("Simplification Render Error:", e); }
+      try { renderRaci(); } catch(e) { console.error("RACI Render Error:", e); }
+    }
+
+    function renderVSM(process) {
+      const tCycle = steps.reduce((a, b) => a + Number(b.Tiempo_Ciclo || 0), 0);
+      const tWait = steps.reduce((a, b) => a + Number(b.Tiempo_Wait || b.Tiempo_Espera || 0), 0);
+      const leadTime = tCycle + tWait;
+      const vaTime = steps.filter(s => s.Tipo_Valor == 'VA').reduce((a, b) => a + Number(b.Tiempo_Ciclo), 0);
+      const efficiency = leadTime > 0 ? (vaTime / leadTime * 100) : 0;
+
+      document.getElementById('vsm-metrics').innerHTML = `
+        <div class="col-6 col-md-3"><div class="card p-2 text-center bg-primary text-white"><h6>Lead Time</h6><h4>${leadTime.toFixed(1)}</h4></div></div>
+        <div class="col-6 col-md-3"><div class="card p-2 text-center bg-success text-white"><h6>Cycle Time</h6><h4>${tCycle.toFixed(1)}</h4></div></div>
+        <div class="col-6 col-md-3"><div class="card p-2 text-center bg-info text-white"><h6>Eficiencia</h6><h4>${efficiency.toFixed(1)}%</h4></div></div>
+        <div class="col-6 col-md-3"><div class="card p-2 text-center bg-warning text-dark"><h6>Wait Time</h6><h4>${tWait.toFixed(1)}</h4></div></div>
+      `;
+
+      const tbody = document.getElementById('steps-table-body');
+      tbody.innerHTML = steps.map(s => `
+        <tr class="status-${s.Tipo_Valor.toLowerCase()}">
+          <td>${s.Orden}</td><td>${s.Nombre}</td><td>${s.Tiempo_Ciclo}</td><td>${s.Tiempo_Espera}</td><td>${s.Tipo_Valor}</td><td>${s.Calidad}%</td>
+        </tr>
+      `).join('');
+
+      renderVSMChart(steps);
+    }
+
+    function renderVSMChart(steps) {
+       const va = steps.filter(s => s.Tipo_Valor == 'VA').reduce((a, b) => a + Number(b.Tiempo_Ciclo), 0);
+       const nva = steps.filter(s => s.Tipo_Valor == 'NVA').reduce((a, b) => a + Number(b.Tiempo_Ciclo), 0);
+       const nnva = steps.filter(s => s.Tipo_Valor == 'NNVA').reduce((a, b) => a + Number(b.Tiempo_Ciclo), 0);
+
+       if (vsmChart) vsmChart.destroy();
+       vsmChart = new Chart(document.getElementById('vsmChart'), {
+         type: 'doughnut',
+         data: {
+           labels: ['VA', 'NVA', 'NNVA'],
+           datasets: [{ data: [va, nva, nnva], backgroundColor: ['#198754', '#dc3545', '#ffc107'] }]
+         },
+         options: { plugins: { title: { display: true, text: 'Distribución de Valor' } } }
+       });
+    }
+
+    function renderSimplification(process) {
+       const totalTime = steps.reduce((a, b) => a + Number(b.Tiempo_Ciclo || 0), 0);
+       let savings = 0;
+       steps.forEach(s => {
+         if(s.Simplificar === true || s.Simplificar === "TRUE")
+            savings += (Number(s.Tiempo_Ciclo || 0) - Number(s.Tiempo_Nuevo || 0));
+       });
+       const reduction = totalTime > 0 ? (savings / totalTime * 100) : 0;
+       const roi = (savings / 60) * (process.Costo_Por_Hora || 0);
+
+       document.getElementById('sim-metrics').innerHTML = `
+         <div class="col-md-4"><div class="card p-2 text-center bg-success text-white"><h6>Ahorro Tiempo</h6><h4>${savings.toFixed(1)}</h4></div></div>
+         <div class="col-md-4"><div class="card p-2 text-center bg-primary text-white"><h6>Reducción</h6><h4>${reduction.toFixed(1)}%</h4></div></div>
+         <div class="col-md-4"><div class="card p-2 text-center bg-dark text-white"><h6>ROI Est.</h6><h4>$${roi.toFixed(2)}</h4></div></div>
+       `;
+
+       const tbody = document.getElementById('sim-table-body');
+       tbody.innerHTML = steps.map(s => `
+         <tr>
+           <td>${s.Nombre}</td><td>${s.Tiempo_Ciclo}</td>
+           <td><input type="number" class="form-control form-control-sm" value="${s.Tiempo_Nuevo}" id="new-t-${s.ID}"></td>
+           <td><select class="form-select form-select-sm" id="imp-type-${s.ID}"><option value="Eliminar">Eliminar</option><option value="Reducir">Reducir</option><option value="Autom.">Autom.</option></select></td>
+           <td><input type="number" class="form-control form-control-sm" value="${s.Impacto}" id="imp-${s.ID}"></td>
+           <td><input type="number" class="form-control form-control-sm" value="${s.Esfuerzo}" id="esf-${s.ID}"></td>
+           <td><button class="btn btn-sm btn-success" onclick="saveSim('${s.ID}')">✓</button></td>
+         </tr>
+       `).join('');
+
+       renderImpactChart();
+    }
+
+    function renderImpactChart() {
+       const data = steps.filter(s => s.Simplificar === true || s.Simplificar === "TRUE").map(s => ({
+         label: s.Nombre,
+         data: [{ x: Number(s.Impacto || 5), y: Number(s.Esfuerzo || 5), r: 10 }],
+         backgroundColor: 'rgba(54, 162, 235, 0.5)'
+       }));
+
+       if (impactChart) impactChart.destroy();
+       impactChart = new Chart(document.getElementById('impactEffortChart'), {
+         type: 'bubble',
+         data: { datasets: data },
+         options: { scales: { x: { min: 0, max: 10, title: { display: true, text: 'Impacto' } }, y: { min: 0, max: 10, title: { display: true, text: 'Esfuerzo' } } } }
+       });
+    }
+
+    function renderRaci() {
+      if (!raciData || raciData.length === 0) {
+        document.getElementById('raci-matrix-container').innerHTML = '<div class="p-3 text-muted">No hay asignaciones RACI aún.</div>';
+        return;
+      }
+      const activities = [...new Set(raciData.map(r => r.Actividad))].filter(Boolean);
+      const personas = [...new Set(raciData.map(r => r.Persona))].filter(Boolean);
+
+      let html = '<table class="table table-bordered table-sm text-center"><thead class="table-dark"><tr><th>Actividad</th>';
+      personas.forEach(p => html += `<th>${p}</th>`);
+      html += '<th>Status</th></tr></thead><tbody>';
+
+      activities.forEach(a => {
+        html += `<tr><td class="text-start">${a}</td>`;
+        let hasR = false, hasA = false;
+        personas.forEach(p => {
+          const ass = raciData.find(r => String(r.Actividad) === String(a) && String(r.Persona) === String(p));
+          let val = [];
+          if (ass) {
+            if (ass.R === true || ass.R === 'TRUE') { val.push('R'); hasR = true; }
+            if (ass.A === true || ass.A === 'TRUE') { val.push('A'); hasA = true; }
+            if (ass.C === true || ass.C === 'TRUE') { val.push('C'); }
+            if (ass.I === true || ass.I === 'TRUE') { val.push('I'); }
+          }
+          html += `<td>${val.join(',')}</td>`;
+        });
+        html += `<td>${hasR && hasA ? '✅' : '❌'}</td></tr>`;
+      });
+      html += '</tbody></table>';
+      document.getElementById('raci-matrix-container').innerHTML = html;
+    }
+
+    // Handlers
+    function showNewProcessModal() { new bootstrap.Modal(document.getElementById('newProcessModal')).show(); }
+    function showAddStepModal() { new bootstrap.Modal(document.getElementById('addStepModal')).show(); }
+    function showRaciModal() { new bootstrap.Modal(document.getElementById('raciModal')).show(); }
+
+    function handleCreateProcess() {
+      const name = document.getElementById('new-p-name').value;
+      const area = document.getElementById('new-p-area').value;
+      const cost = document.getElementById('new-p-cost').value;
+      if (!name) { alert("El nombre es requerido"); return; }
+
+      toggleLoading(true);
+      google.script.run
+        .withSuccessHandler(newId => {
+          console.log("Process created ID:", newId);
+          // Actualizamos la lista y cargamos el nuevo proceso automáticamente
+          currentProcessId = String(newId);
+          initApp();
+          loadProcess(newId);
+
+          bootstrap.Modal.getInstance(document.getElementById('newProcessModal')).hide();
+          // Clear inputs
+          document.getElementById('new-p-name').value = '';
+          document.getElementById('new-p-area').value = '';
+          document.getElementById('new-p-cost').value = '0';
+        })
+        .withFailureHandler(err => {
+          console.error("Create Error:", err);
+          alert("Error al crear proceso: " + err.message);
+          toggleLoading(false);
+        })
+        .createProcess(name, area, cost);
+    }
+
+    function handleAddStep() {
+      const data = {
+        name: document.getElementById('step-name').value,
+        cycle_time: document.getElementById('step-cycle').value || 0,
+        wait_time: document.getElementById('step-wait').value || 0,
+        value_type: document.getElementById('step-type').value,
+        quality: document.getElementById('step-quality').value || 100,
+        order: steps.length + 1
+      };
+      if (!data.name) { alert("El nombre del paso es requerido"); return; }
+
+      toggleLoading(true);
+      google.script.run
+        .withSuccessHandler(() => {
+          loadProcess(currentProcessId);
+          bootstrap.Modal.getInstance(document.getElementById('addStepModal')).hide();
+        })
+        .withFailureHandler(err => {
+          alert("Error al agregar paso: " + err.message);
+          toggleLoading(false);
+        })
+        .addStep(currentProcessId, data);
+    }
+
+    function saveSim(stepId) {
+      const data = {
+        simplify: true,
+        new_time: document.getElementById(`new-t-${stepId}`).value || 0,
+        improvement_type: document.getElementById(`imp-type-${stepId}`).value,
+        impact: document.getElementById(`imp-${stepId}`).value || 5,
+        effort: document.getElementById(`esf-${stepId}`).value || 5
+      };
+      toggleLoading(true);
+      google.script.run
+        .withSuccessHandler(() => { loadProcess(currentProcessId); })
+        .withFailureHandler(err => {
+          alert("Error al guardar simplificación: " + err.message);
+          toggleLoading(false);
+        })
+        .updateStepSimplification(stepId, data);
+    }
+
+    function handleSaveRaci() {
+      const act = document.getElementById('raci-activity').value;
+      const per = document.getElementById('raci-persona').value;
+      const roles = Array.from(document.querySelectorAll('input[name="raci-role"]:checked')).map(c => c.value);
+      if (!act || !per) { alert("Actividad y Persona son requeridos"); return; }
+
+      toggleLoading(true);
+      google.script.run
+        .withSuccessHandler(() => {
+          loadProcess(currentProcessId);
+          bootstrap.Modal.getInstance(document.getElementById('raciModal')).hide();
+        })
+        .withFailureHandler(err => {
+          alert("Error al guardar RACI: " + err.message);
+          toggleLoading(false);
+        })
+        .saveRaciAssignment(currentProcessId, act, per, roles);
+    }
+
+
+  </script>
+</body>
+</html>
