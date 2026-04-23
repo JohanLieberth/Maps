@@ -1,0 +1,104 @@
+<div id="formPasoInner">
+  <div class="mb-3">
+    <label class="form-label">ID Proyecto</label>
+    <div class="input-group">
+      <input type="text" id="idProy" class="form-control" placeholder="VSM-2026-XXXX">
+      <button class="btn btn-outline-secondary" type="button" onclick="cargarUltimoID()">Último</button>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col">
+      <label class="form-label">Escenario</label>
+      <select id="escenario" class="form-select">
+        <option value="Actual">Actual (As-Is)</option>
+        <option value="Propuesto">Propuesto (To-Be)</option>
+      </select>
+    </div>
+    <div class="col">
+      <label class="form-label">Valor Lean</label>
+      <select id="etiqueta" class="form-select" onchange="toggleVA()">
+        <option value="VA">Valor Añadido (VA)</option>
+        <option value="VNA-N">VNA Necesario (VNA-N)</option>
+        <option value="VNA">Desperdicio (VNA)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Nombre Actividad</label>
+    <input type="text" id="nombrePaso" class="form-control">
+  </div>
+
+  <div class="row mb-3">
+    <div class="col">
+      <label class="form-label">T. Trabajo (min)</label>
+      <input type="number" id="tVa" class="form-control" value="0">
+    </div>
+    <div class="col">
+      <label class="form-label">T. Espera (min)</label>
+      <input type="number" id="tEsp" class="form-control" value="0">
+    </div>
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label">Responsable Paso</label>
+    <input type="text" id="resp" class="form-control">
+  </div>
+
+  <button onclick="guardarPaso()" id="btnGuardarPaso" class="btn btn-success w-100">Registrar Paso</button>
+  <div id="statusPaso" class="mt-2 small text-center"></div>
+</div>
+
+<script>
+  function cargarUltimoID() {
+    google.script.run.withSuccessHandler(id => {
+      if(id) document.getElementById('idProy').value = id;
+    }).ultimoIdProyecto();
+  }
+
+  function toggleVA() {
+    const val = document.getElementById('etiqueta').value;
+    if(val === 'VA') {
+      document.getElementById('tEsp').value = 0;
+      document.getElementById('tEsp').disabled = true;
+    } else {
+      document.getElementById('tEsp').disabled = false;
+    }
+  }
+
+  function guardarPaso() {
+    const btn = document.getElementById('btnGuardarPaso');
+    btn.disabled = true;
+    document.getElementById('statusPaso').innerText = "Guardando...";
+
+    const datos = {
+      idProyecto: document.getElementById('idProy').value,
+      escenario: document.getElementById('escenario').value,
+      etiquetaValor: document.getElementById('etiqueta').value,
+      nombreActividad: document.getElementById('nombrePaso').value,
+      tiempoActividad: document.getElementById('tVa').value,
+      tiempoEspera: document.getElementById('tEsp').value,
+      responsablePaso: document.getElementById('resp').value,
+      areaEjecutora: "General",
+      cuelloBotella: "No"
+    };
+
+    google.script.run
+      .withSuccessHandler(res => {
+        if(res.success) {
+          document.getElementById('statusPaso').innerHTML = '<div class="alert alert-success">Paso registrado.</div>';
+          document.getElementById('nombrePaso').value = "";
+          btn.disabled = false;
+        } else {
+          document.getElementById('statusPaso').innerText = "Error: " + res.mensaje;
+          btn.disabled = false;
+        }
+      })
+      .withFailureHandler(err => {
+        document.getElementById('statusPaso').innerText = "Error: " + err;
+        btn.disabled = false;
+      })
+      .agregarPaso(datos.idProyecto, datos);
+  }
+</script>
