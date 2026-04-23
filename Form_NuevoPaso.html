@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+      body { padding: 15px; font-size: 14px; }
+      .section-title { border-bottom: 2px solid #eee; margin-bottom: 15px; padding-bottom: 5px; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="mb-3">
+        <label class="form-label">ID Proyecto</label>
+        <input type="text" id="idProy" class="form-control" placeholder="VSM-2026-XXXX">
+      </div>
+
+      <div class="row mb-3">
+        <div class="col">
+          <label class="form-label">Escenario</label>
+          <select id="escenario" class="form-select">
+            <option value="Actual">Actual (As-Is)</option>
+            <option value="Propuesto">Propuesto (To-Be)</option>
+          </select>
+        </div>
+        <div class="col">
+          <label class="form-label">Valor Lean</label>
+          <select id="etiqueta" class="form-select" onchange="toggleVA()">
+            <option value="VA">Valor Añadido (VA)</option>
+            <option value="VNA-N">VNA Necesario (VNA-N)</option>
+            <option value="VNA">Desperdicio (VNA)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Nombre Actividad</label>
+        <input type="text" id="nombre" class="form-control">
+      </div>
+
+      <div class="row mb-3">
+        <div class="col">
+          <label class="form-label">T. Trabajo (min)</label>
+          <input type="number" id="tVa" class="form-control" value="0">
+        </div>
+        <div class="col">
+          <label class="form-label">T. Espera (min)</label>
+          <input type="number" id="tEsp" class="form-control" value="0">
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Responsable Paso</label>
+        <input type="text" id="resp" class="form-control">
+      </div>
+
+      <button onclick="guardar()" id="btnGuardar" class="btn btn-success w-100">Registrar Paso</button>
+      <div id="status" class="mt-2 small text-center"></div>
+    </div>
+
+    <script>
+      window.onload = () => {
+        google.script.run.withSuccessHandler(id => {
+          if(id) document.getElementById('idProy').value = id;
+        }).ultimoIdProyecto();
+      };
+
+      function toggleVA() {
+        const val = document.getElementById('etiqueta').value;
+        if(val === 'VA') {
+          document.getElementById('tEsp').value = 0;
+          document.getElementById('tEsp').disabled = true;
+        } else {
+          document.getElementById('tEsp').disabled = false;
+        }
+      }
+
+      function guardar() {
+        const btn = document.getElementById('btnGuardar');
+        btn.disabled = true;
+
+        const datos = {
+          idProyecto: document.getElementById('idProy').value,
+          escenario: document.getElementById('escenario').value,
+          etiquetaValor: document.getElementById('etiqueta').value,
+          nombreActividad: document.getElementById('nombre').value,
+          tiempoActividad: document.getElementById('tVa').value,
+          tiempoEspera: document.getElementById('tEsp').value,
+          responsablePaso: document.getElementById('resp').value,
+          areaEjecutora: "General", // Simplificado para el demo
+          cuelloBotella: "No"
+        };
+
+        google.script.run
+          .withSuccessHandler(res => {
+            if(res.success) {
+              document.getElementById('status').innerHTML = "✅ Paso registrado correctamente.";
+              document.getElementById('nombre').value = "";
+              btn.disabled = false;
+            } else {
+              document.getElementById('status').innerText = "❌ Error: " + res.mensaje;
+              btn.disabled = false;
+            }
+          })
+          .agregarPaso(datos.idProyecto, datos);
+      }
+    </script>
+  </body>
+</html>
