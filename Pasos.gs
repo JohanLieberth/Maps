@@ -10,6 +10,11 @@ function agregarPaso(idProyecto, datos) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(CONFIG.HOJAS.PASOS);
 
+    if (!sheet) {
+      inicializarHerramienta();
+      return agregarPaso(idProyecto, datos);
+    }
+
     // 1. Validar que el proyecto esté activo (opcional pero recomendado)
 
     // 2. Preparar datos

@@ -8,6 +8,11 @@
 function generarIdProyecto() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(CONFIG.HOJAS.PROYECTOS);
+
+  if (!sheet) {
+    throw new Error("La hoja 'Proyectos' no existe. Por favor, ejecute la inicialización.");
+  }
+
   const year = new Date().getFullYear();
   const prefix = `${CONFIG.ID_PREFIJO_PROY}${year}-`;
 
@@ -62,6 +67,11 @@ function registrarAuditoria(idReferencia, entidad, campo, valorAnterior, valorNu
 function getSiguienteSecuencia(idProyecto, escenario) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(CONFIG.HOJAS.PASOS);
+
+  if (!sheet) {
+    throw new Error("La hoja 'Pasos' no existe.");
+  }
+
   const data = sheet.getDataRange().getValues();
 
   let maxSec = 0;

@@ -53,6 +53,8 @@ const CONFIG = {
 function getParametro(paramName) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const sheet = ss.getSheetByName(CONFIG.HOJAS.CONFIGURACION);
+  if (!sheet) return null;
+
   const data = sheet.getDataRange().getValues();
 
   for (let i = 0; i < data.length; i++) {

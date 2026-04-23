@@ -10,6 +10,11 @@ function crearNuevoProyecto(datos) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(CONFIG.HOJAS.PROYECTOS);
 
+    if (!sheet) {
+      inicializarHerramienta();
+      return crearNuevoProyecto(datos); // Reintentar tras inicializar
+    }
+
     // 1. Validar duplicados activos
     const data = sheet.getDataRange().getValues();
     const existe = data.some(row => row[1] === datos.nombreProceso && row[6] === "Activo");
