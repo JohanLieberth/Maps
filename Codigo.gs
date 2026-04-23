@@ -3,6 +3,24 @@
  * Proyecto: Gestor de VSM Lean para Administraciones Públicas
  */
 
+/**
+ * Servir la interfaz web (Web App)
+ */
+function doGet(e) {
+  return HtmlService.createTemplateFromFile('Index')
+    .evaluate()
+    .setTitle('VSM Lean - Panel de Gestión')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+/**
+ * Función para incluir fragmentos HTML
+ */
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+}
+
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
   ui.createMenu('VSM Lean')
