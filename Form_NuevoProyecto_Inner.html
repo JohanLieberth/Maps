@@ -1,0 +1,92 @@
+<div id="formProyectoInner">
+  <div class="mb-3">
+    <label class="form-label">Nombre del Proceso</label>
+    <input type="text" id="nombre" class="form-control" placeholder="Ej: Adjudicación de Contratos">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Área Responsable</label>
+    <select id="area" class="form-select">
+      <option value="Secretaría Municipal">Secretaría Municipal</option>
+      <option value="Instituto Municipal de Planeación de Mérida">Instituto Municipal de Planeación de Mérida</option>
+      <option value="Unidad de Transparencia">Unidad de Transparencia</option>
+      <option value="Unidad de Comunicación Ciudadana">Unidad de Comunicación Ciudadana</option>
+      <option value="Dirección de la Policía Municipal">Dirección de la Policía Municipal</option>
+      <option value="Dirección de Contraloría Municipal">Dirección de Contraloría Municipal</option>
+      <option value="Secretaría de Participación y Atención Ciudadana">Secretaría de Participación y Atención Ciudadana</option>
+      <option value="Coordinación General de Buen Gobierno">Coordinación General de Buen Gobierno</option>
+      <option value="Unidad de Planeación y Gestión">Unidad de Planeación y Gestión</option>
+      <option value="Dirección de Gobernación">Dirección de Gobernación</option>
+      <option value="Dirección de Administración">Dirección de Administración</option>
+      <option value="Dirección de Finanzas y Tesorería Municipal">Dirección de Finanzas y Tesorería Municipal</option>
+      <option value="Dirección de Innovación y Gobierno Inteligente">Dirección de Innovación y Gobierno Inteligente</option>
+      <option value="Coordinación General de Justicia Social y Desarrollo Humano">Coordinación General de Justicia Social y Desarrollo Humano</option>
+      <option value="Unidad de Turismo">Unidad de Turismo</option>
+      <option value="Dirección de Desarrollo Integral de la Familia">Dirección de Desarrollo Integral de la Familia</option>
+      <option value="Dirección de Desarrollo Social y Combate a la Pobreza">Dirección de Desarrollo Social y Combate a la Pobreza</option>
+      <option value="Dirección de Bienestar Humano">Dirección de Bienestar Humano</option>
+      <option value="Dirección de Prosperidad y Bienestar Económico">Dirección de Prosperidad y Bienestar Económico</option>
+      <option value="Instituto de las Mujeres">Instituto de las Mujeres</option>
+      <option value="Dirección de Identidad y Cultura">Dirección de Identidad y Cultura</option>
+      <option value="Coordinación General de Desarrollo Ordenado y Gestión de la Ciudad">Coordinación General de Desarrollo Ordenado y Gestión de la Ciudad</option>
+      <option value="Dirección de Desarrollo Urbano">Dirección de Desarrollo Urbano</option>
+      <option value="Dirección de Obras Públicas">Dirección de Obras Públicas</option>
+      <option value="Dirección de Servicios Públicos">Dirección de Servicios Públicos</option>
+      <option value="Unidad de Medio Ambiente y Bienestar Animal">Unidad de Medio Ambiente y Bienestar Animal</option>
+      <option value="Dirección de Catastro">Dirección de Catastro</option>
+      <option value="Secretaría Ejecutiva del Comité Permanente del Carnaval">Secretaría Ejecutiva del Comité Permanente del Carnaval</option>
+      <option value="Reserva Cuxtal">Reserva Cuxtal</option>
+      <option value="Central de Abastos">Central de Abastos</option>
+      <option value="Abastos de Mérida">Abastos de Mérida</option>
+      <option value="SERVI-LIMPIA">SERVI-LIMPIA</option>
+    </select>
+  </div>
+  <div class="row mb-3">
+    <div class="col">
+      <label class="form-label">Nombre del Responsable</label>
+      <input type="text" id="respNombre" class="form-control">
+    </div>
+    <div class="col">
+      <label class="form-label">Correo Electrónico</label>
+      <input type="email" id="respEmail" class="form-control">
+    </div>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Observaciones</label>
+    <textarea id="obs" class="form-control" rows="3"></textarea>
+  </div>
+  <button onclick="enviarProyecto()" id="btnEnviarProy" class="btn btn-primary w-100">Crear Proyecto</button>
+  <div id="statusProy" class="mt-3 text-center small"></div>
+</div>
+
+<script>
+  function enviarProyecto() {
+    const btn = document.getElementById('btnEnviarProy');
+    btn.disabled = true;
+    document.getElementById('statusProy').innerText = "Procesando...";
+
+    const datos = {
+      nombreProceso: document.getElementById('nombre').value,
+      areaResponsable: document.getElementById('area').value,
+      responsableNombre: document.getElementById('respNombre').value,
+      responsableEmail: document.getElementById('respEmail').value,
+      observaciones: document.getElementById('obs').value
+    };
+
+    google.script.run
+      .withSuccessHandler(res => {
+        if(res.success) {
+          document.getElementById('statusProy').innerHTML = `<div class="alert alert-success">¡Proyecto creado! ID: ${res.idProyecto}</div>`;
+          document.getElementById('nombre').value = '';
+          btn.disabled = false;
+        } else {
+          document.getElementById('statusProy').innerText = "Error: " + res.mensaje;
+          btn.disabled = false;
+        }
+      })
+      .withFailureHandler(err => {
+        document.getElementById('statusProy').innerText = "Error crítico: " + err;
+        btn.disabled = false;
+      })
+      .crearNuevoProyecto(datos);
+  }
+</script>
