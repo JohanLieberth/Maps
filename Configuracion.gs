@@ -17,13 +17,14 @@ const CONFIG = {
       ID: 1, // A
       NOMBRE: 2, // B
       AREA: 3,
-      RESPONSABLE: 4,
-      FECHA_INICIO: 5,
-      FECHA_MOD: 6,
-      ESTADO: 7,
+      RESP_NOMBRE: 4,
+      RESP_EMAIL: 5,
+      FECHA_INICIO: 6,
+      FECHA_MOD: 7,
+      ESTADO: 8,
       TIPO_MAPA: 8,
-      URL_ACTUAL: 16, // P
-      URL_PROPUESTO: 17 // Q
+      URL_ACTUAL: 17, // Q
+      URL_PROPUESTO: 18 // R
     },
     PASOS: {
       ID_REGISTRO: 1,

@@ -102,6 +102,23 @@ function editarPaso(idRegistro, datosActualizados) {
 }
 
 /**
+ * Obtiene los datos de un solo paso por su ID de registro
+ */
+function getPaso(idRegistro) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName(CONFIG.HOJAS.PASOS);
+  const data = sheet.getDataRange().getValues();
+  const headers = data.shift();
+
+  const row = data.find(r => r[0] === idRegistro);
+  if (!row) return null;
+
+  let obj = {};
+  headers.forEach((h, i) => obj[h] = row[i]);
+  return obj;
+}
+
+/**
  * Borrado lógico de un paso
  */
 function eliminarPaso(idRegistro) {

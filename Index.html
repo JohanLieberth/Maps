@@ -224,14 +224,43 @@
               container.innerHTML = '<div class="p-4 text-center text-muted">No hay actividades registradas para este proyecto.</div>';
               return;
             }
-            let html = '<table class="table table-sm mb-0"><thead><tr><th>Orden</th><th>Escenario</th><th>Nombre</th><th>Valor</th><th>LT (min)</th></tr></thead><tbody>';
+            let html = '<table class="table table-sm mb-0"><thead><tr><th>Orden</th><th>Escenario</th><th>Nombre</th><th>Valor</th><th>LT (min)</th><th class="text-end">Acciones</th></tr></thead><tbody>';
             activities.forEach(a => {
-              html += `<tr><td>${a.secuencia}</td><td>${a.escenario}</td><td>${a.nombre}</td><td>${a.valor}</td><td>${a.leadTime}</td></tr>`;
+              html += `<tr>
+                <td>${a.secuencia}</td>
+                <td>${a.escenario}</td>
+                <td>${a.nombre}</td>
+                <td>${a.valor}</td>
+                <td>${a.leadTime}</td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-sm btn-outline-primary" onclick="editarActividad('${a.id}')" title="Modificar"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="borrarActividad('${a.id}', '${id}', '${nombre}')" title="Eliminar"><i class="bi bi-trash"></i></button>
+                  </div>
+                </td>
+              </tr>`;
             });
             html += '</tbody></table>';
             container.innerHTML = html;
           })
           .getActivitiesByProject(id);
+      }
+
+      function editarActividad(idReg) {
+        loadView('agregar-paso');
+        prepararEdicionPaso(idReg);
+      }
+
+      function borrarActividad(idReg, idProy, nombreProy) {
+        if(confirm('¿Está seguro de eliminar esta actividad? Esta acción no se puede deshacer.')) {
+          toggleLoader(true);
+          google.script.run.withSuccessHandler(res => {
+            toggleLoader(false);
+            if(res.success) {
+              loadActivities(idProy, nombreProy);
+            }
+          }).eliminarPaso(idReg);
+        }
       }
 
       window.onload = () => loadDashboard();

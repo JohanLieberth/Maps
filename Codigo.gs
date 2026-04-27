@@ -74,7 +74,7 @@ function inicializarHerramienta() {
   const proySheet = ss.getSheetByName(CONFIG.HOJAS.PROYECTOS);
   if (proySheet.getLastRow() === 0) {
     proySheet.appendRow([
-      "ID_Proyecto", "Nombre_Proceso", "Area_Responsable", "Responsable",
+      "ID_Proyecto", "Nombre_Proceso", "Area_Responsable", "Responsable_Nombre", "Responsable_Email",
       "Fecha_Inicio", "Fecha_Ultima_Mod", "Estado_Proyecto", "Tipo_Mapa",
       "Total_Pasos_Actual", "Total_Pasos_Propuesto", "Lead_Time_Actual_Hrs",
       "Lead_Time_Propuesto_Hrs", "PCE_Actual_%", "PCE_Propuesto_%",

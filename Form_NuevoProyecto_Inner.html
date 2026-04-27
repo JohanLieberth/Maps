@@ -6,12 +6,49 @@
   <div class="mb-3">
     <label class="form-label">Área Responsable</label>
     <select id="area" class="form-select">
-      <!-- Cargado dinámicamente -->
+      <option value="Secretaría Municipal">Secretaría Municipal</option>
+      <option value="Instituto Municipal de Planeación de Mérida">Instituto Municipal de Planeación de Mérida</option>
+      <option value="Unidad de Transparencia">Unidad de Transparencia</option>
+      <option value="Unidad de Comunicación Ciudadana">Unidad de Comunicación Ciudadana</option>
+      <option value="Dirección de la Policía Municipal">Dirección de la Policía Municipal</option>
+      <option value="Dirección de Contraloría Municipal">Dirección de Contraloría Municipal</option>
+      <option value="Secretaría de Participación y Atención Ciudadana">Secretaría de Participación y Atención Ciudadana</option>
+      <option value="Coordinación General de Buen Gobierno">Coordinación General de Buen Gobierno</option>
+      <option value="Unidad de Planeación y Gestión">Unidad de Planeación y Gestión</option>
+      <option value="Dirección de Gobernación">Dirección de Gobernación</option>
+      <option value="Dirección de Administración">Dirección de Administración</option>
+      <option value="Dirección de Finanzas y Tesorería Municipal">Dirección de Finanzas y Tesorería Municipal</option>
+      <option value="Dirección de Innovación y Gobierno Inteligente">Dirección de Innovación y Gobierno Inteligente</option>
+      <option value="Coordinación General de Justicia Social y Desarrollo Humano">Coordinación General de Justicia Social y Desarrollo Humano</option>
+      <option value="Unidad de Turismo">Unidad de Turismo</option>
+      <option value="Dirección de Desarrollo Integral de la Familia">Dirección de Desarrollo Integral de la Familia</option>
+      <option value="Dirección de Desarrollo Social y Combate a la Pobreza">Dirección de Desarrollo Social y Combate a la Pobreza</option>
+      <option value="Dirección de Bienestar Humano">Dirección de Bienestar Humano</option>
+      <option value="Dirección de Prosperidad y Bienestar Económico">Dirección de Prosperidad y Bienestar Económico</option>
+      <option value="Instituto de las Mujeres">Instituto de las Mujeres</option>
+      <option value="Dirección de Identidad y Cultura">Dirección de Identidad y Cultura</option>
+      <option value="Coordinación General de Desarrollo Ordenado y Gestión de la Ciudad">Coordinación General de Desarrollo Ordenado y Gestión de la Ciudad</option>
+      <option value="Dirección de Desarrollo Urbano">Dirección de Desarrollo Urbano</option>
+      <option value="Dirección de Obras Públicas">Dirección de Obras Públicas</option>
+      <option value="Dirección de Servicios Públicos">Dirección de Servicios Públicos</option>
+      <option value="Unidad de Medio Ambiente y Bienestar Animal">Unidad de Medio Ambiente y Bienestar Animal</option>
+      <option value="Dirección de Catastro">Dirección de Catastro</option>
+      <option value="Secretaría Ejecutiva del Comité Permanente del Carnaval">Secretaría Ejecutiva del Comité Permanente del Carnaval</option>
+      <option value="Reserva Cuxtal">Reserva Cuxtal</option>
+      <option value="Central de Abastos">Central de Abastos</option>
+      <option value="Abastos de Mérida">Abastos de Mérida</option>
+      <option value="SERVI-LIMPIA">SERVI-LIMPIA</option>
     </select>
   </div>
-  <div class="mb-3">
-    <label class="form-label">Responsable (Email)</label>
-    <input type="email" id="responsable" class="form-control">
+  <div class="row mb-3">
+    <div class="col">
+      <label class="form-label">Nombre del Responsable</label>
+      <input type="text" id="respNombre" class="form-control">
+    </div>
+    <div class="col">
+      <label class="form-label">Correo Electrónico</label>
+      <input type="email" id="respEmail" class="form-control">
+    </div>
   </div>
   <div class="mb-3">
     <label class="form-label">Observaciones</label>
@@ -22,22 +59,6 @@
 </div>
 
 <script>
-  function cargarAreas() {
-    google.script.run.withSuccessHandler(areas => {
-      const select = document.getElementById('area');
-      select.innerHTML = '';
-      areas.forEach(a => {
-        let opt = document.createElement('option');
-        opt.value = a;
-        opt.innerHTML = a;
-        select.appendChild(opt);
-      });
-    }).getListaAreas();
-  }
-
-  // Cargar áreas al inicio (para web app)
-  if(typeof google !== 'undefined') cargarAreas();
-
   function enviarProyecto() {
     const btn = document.getElementById('btnEnviarProy');
     btn.disabled = true;
@@ -46,7 +67,8 @@
     const datos = {
       nombreProceso: document.getElementById('nombre').value,
       areaResponsable: document.getElementById('area').value,
-      responsable: document.getElementById('responsable').value,
+      responsableNombre: document.getElementById('respNombre').value,
+      responsableEmail: document.getElementById('respEmail').value,
       observaciones: document.getElementById('obs').value
     };
 

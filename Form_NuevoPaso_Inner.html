@@ -1,4 +1,6 @@
 <div id="formPasoInner">
+  <input type="hidden" id="editIdRegistro" value="">
+
   <div class="mb-3">
     <label class="form-label">ID Proyecto</label>
     <div class="input-group">
@@ -46,7 +48,9 @@
     <input type="text" id="resp" class="form-control">
   </div>
 
-  <button onclick="guardarPaso()" id="btnGuardarPaso" class="btn btn-success w-100">Registrar Paso</button>
+  <div id="btnContainerPaso">
+    <button onclick="guardarPaso()" id="btnGuardarPaso" class="btn btn-success w-100">Registrar Paso</button>
+  </div>
   <div id="statusPaso" class="mt-2 small text-center"></div>
 </div>
 
@@ -65,6 +69,53 @@
     } else {
       document.getElementById('tEsp').disabled = false;
     }
+  }
+
+  function prepararEdicionPaso(idRegistro) {
+    document.getElementById('statusPaso').innerText = "Cargando datos...";
+    google.script.run.withSuccessHandler(paso => {
+      if(!paso) return;
+      document.getElementById('editIdRegistro').value = idRegistro;
+      document.getElementById('idProy').value = paso.ID_Proyecto_FK;
+      document.getElementById('escenario').value = paso.Escenario;
+      document.getElementById('etiqueta').value = paso.Etiqueta_Valor;
+      document.getElementById('nombrePaso').value = paso.Nombre_Actividad;
+      document.getElementById('tVa').value = paso.Tiempo_Actividad_Min;
+      document.getElementById('tEsp').value = paso.Tiempo_Espera_Min;
+      document.getElementById('resp').value = paso.Responsable_Paso;
+
+      document.getElementById('btnContainerPaso').innerHTML = `
+        <div class="btn-group w-100">
+          <button onclick="actualizarPaso()" class="btn btn-primary">Actualizar</button>
+          <button onclick="cancelarEdicionPaso()" class="btn btn-secondary">Cancelar</button>
+        </div>
+      `;
+      document.getElementById('statusPaso').innerText = "";
+      toggleVA();
+    }).getPaso(idRegistro);
+  }
+
+  function cancelarEdicionPaso() {
+    document.getElementById('editIdRegistro').value = "";
+    document.getElementById('nombrePaso').value = "";
+    document.getElementById('btnContainerPaso').innerHTML = '<button onclick="guardarPaso()" id="btnGuardarPaso" class="btn btn-success w-100">Registrar Paso</button>';
+  }
+
+  function actualizarPaso() {
+    const idReg = document.getElementById('editIdRegistro').value;
+    const datos = {
+      nombreActividad: document.getElementById('nombrePaso').value,
+      tiempoActividad: document.getElementById('tVa').value,
+      tiempoEspera: document.getElementById('tEsp').value,
+      // Se pueden añadir más campos según necesidad
+    };
+
+    google.script.run.withSuccessHandler(res => {
+      if(res.success) {
+        document.getElementById('statusPaso').innerHTML = '<div class="alert alert-success">Paso actualizado.</div>';
+        cancelarEdicionPaso();
+      }
+    }).editarPaso(idReg, datos);
   }
 
   function guardarPaso() {

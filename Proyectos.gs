@@ -29,12 +29,13 @@ function crearNuevoProyecto(datos) {
     const sheetName = `VSM_${idProyecto}`;
 
     // 3. Insertar en Proyectos
-    // Estructura: ID, Nombre, Area, Resp, Inicio, Mod, Estado, Tipo, Actual_P, Prop_P, Actual_LT, Prop_LT, PCE_A, PCE_P, Ahorro, URL_A, URL_P, Obs
+    // Estructura: ID, Nombre, Area, Resp_Nom, Resp_Email, Inicio, Mod, Estado, Tipo, Actual_P, Prop_P, Actual_LT, Prop_LT, PCE_A, PCE_P, Ahorro, URL_A, URL_P, Obs
     const nuevaFila = [
       idProyecto,
       datos.nombreProceso,
       datos.areaResponsable,
-      datos.responsable,
+      datos.responsableNombre,
+      datos.responsableEmail,
       timestamp,
       timestamp,
       "Activo",
