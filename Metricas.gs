@@ -62,6 +62,31 @@ function actualizarMetricasProyecto(idProyecto) {
       break;
     }
   }
+
+  // Actualizar hoja visual VSM
+  const sheetName = `VSM_${idProyecto}`;
+  const vsmSheet = ss.getSheetByName(sheetName);
+  if (vsmSheet) {
+    // Limpiar datos anteriores (desde fila 4)
+    if (vsmSheet.getLastRow() >= 4) {
+      vsmSheet.getRange(4, 1, vsmSheet.getLastRow() - 3, 7).clear();
+    }
+
+    // Preparar nuevos datos ordenados
+    const visualData = pasosProy.sort((a, b) => a[3] - b[3]).map(r => [
+      r[3], // Orden
+      r[5], // Actividad
+      r[4], // Escenario
+      r[6], // Valor
+      r[9], // T. Trabajo
+      r[10], // T. Espera
+      r[11]  // LT
+    ]);
+
+    if (visualData.length > 0) {
+      vsmSheet.getRange(4, 1, visualData.length, 7).setValues(visualData);
+    }
+  }
 }
 
 /**
@@ -105,4 +130,48 @@ function getDashboardStats() {
   });
 
   return stats;
+}
+
+/**
+ * Calcula la comparativa de eficiencia entre estados Actual y Propuesto
+ */
+function calculateEfficiency(idProyecto) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const proySheet = ss.getSheetByName(CONFIG.HOJAS.PROYECTOS);
+  const data = proySheet.getDataRange().getValues();
+
+  const proy = data.find(r => r[0] === idProyecto);
+  if (!proy) return { status: 'error', message: 'Proyecto no encontrado' };
+
+  const ltActual = parseFloat(proy[10]) || 0;
+  const ltPropuesto = parseFloat(proy[11]) || 0;
+
+  const gananciaHrs = ltActual - ltPropuesto;
+  const optimizacionPct = ltActual > 0 ? (gananciaHrs / ltActual) * 100 : 0;
+
+  let indicador = "Neutral";
+  let color = "#7f8c8d";
+
+  if (optimizacionPct > 20) {
+    indicador = "Alta Mejora";
+    color = "#27ae60";
+  } else if (optimizacionPct > 5) {
+    indicador = "Mejora Incremental";
+    color = "#2980b9";
+  } else if (optimizacionPct < 0) {
+    indicador = "Regresión de Tiempo";
+    color = "#c0392b";
+  }
+
+  return {
+    status: 'success',
+    data: {
+      ltActual: ltActual.toFixed(2),
+      ltPropuesto: ltPropuesto.toFixed(2),
+      ganancia: gananciaHrs.toFixed(2),
+      optimizacion: optimizacionPct.toFixed(1) + "%",
+      indicador: indicador,
+      color: color
+    }
+  };
 }

@@ -40,25 +40,30 @@ function generarIdPaso() {
 /**
  * Registra un cambio en la hoja de auditoría
  */
-function registrarAuditoria(idReferencia, entidad, campo, valorAnterior, valorNuevo) {
+function logAudit(accion, detalles, idReferencia) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sheet = ss.getSheetByName(CONFIG.HOJAS.AUDITORIA);
 
   if (!sheet) {
     sheet = ss.insertSheet(CONFIG.HOJAS.AUDITORIA);
-    sheet.appendRow(["Timestamp", "Usuario", "ID_Referencia", "Entidad", "Campo", "Valor Anterior", "Valor Nuevo"]);
+    sheet.appendRow(["Timestamp", "Usuario", "Acción Realizada", "Detalles", "ID Registro Afectado"]);
     sheet.hideSheet();
   }
 
   sheet.appendRow([
     new Date(),
     Session.getActiveUser().getEmail(),
-    idReferencia,
-    entidad,
-    campo,
-    valorAnterior,
-    valorNuevo
+    accion,
+    detalles,
+    idReferencia
   ]);
+}
+
+/**
+ * Función legacy para compatibilidad
+ */
+function registrarAuditoria(idReferencia, entidad, campo, valorAnterior, valorNuevo) {
+  logAudit(`Cambio en ${entidad}: ${campo}`, `De ${valorAnterior} a ${valorNuevo}`, idReferencia);
 }
 
 /**
@@ -96,7 +101,11 @@ function formatearHojaVSM(sheetName) {
 
   // Diseño básico de la visualización VSM
   sheet.getRange("A1:Z100").clear();
-  sheet.getRange("A1").setValue("MAPA DE FLUJO DE VALOR: " + sheetName).setFontSize(16).setFontWeight("bold");
+  sheet.getRange("A1:G1").merge().setValue("MAPA DE FLUJO DE VALOR: " + sheetName)
+    .setFontSize(16).setFontWeight("bold").setBackground("#1a73e8").setFontColor("white").setHorizontalAlignment("center");
+
+  sheet.getRange("A3:G3").setValues([["Orden", "Actividad", "Escenario", "Valor", "T. Trabajo", "T. Espera", "Lead Time"]])
+    .setBackground("#f1f3f4").setFontWeight("bold");
 
   // Aquí se podrían añadir más detalles de diseño
   return sheet;

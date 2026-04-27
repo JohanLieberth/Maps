@@ -6,7 +6,9 @@
  * Agrega un nuevo paso al inventario
  */
 function agregarPaso(idProyecto, datos) {
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(10000);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(CONFIG.HOJAS.PASOS);
 
@@ -59,14 +61,17 @@ function agregarPaso(idProyecto, datos) {
     ];
 
     sheet.appendRow(nuevaFila);
+    logAudit("Crear Paso", `Actividad: ${datos.nombreActividad}`, idRegistro);
 
     // 3. Recalcular métricas del proyecto
     actualizarMetricasProyecto(idProyecto);
 
-    return { success: true, id: idRegistro };
+    return { status: 'success', id: idRegistro };
 
   } catch (e) {
-    return { success: false, mensaje: e.toString() };
+    return { status: 'error', message: e.toString() };
+  } finally {
+    lock.releaseLock();
   }
 }
 

@@ -3,19 +3,37 @@
  */
 
 /**
- * Crea un nuevo proyecto en la hoja Maestra
+ * Crea o actualiza un proyecto con control de concurrencia
  */
-function crearNuevoProyecto(datos) {
+function saveProjectData(datos) {
+  const lock = LockService.getScriptLock();
   try {
+    lock.waitLock(15000);
+
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = ss.getSheetByName(CONFIG.HOJAS.PROYECTOS);
 
     if (!sheet) {
       inicializarHerramienta();
-      return crearNuevoProyecto(datos); // Reintentar tras inicializar
+      return saveProjectData(datos);
     }
 
-    // 1. Validar duplicados activos
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+
+    // Buscar por nombre de proceso para evitar duplicados en creación o identificar edición
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][1] === datos.nombreProceso && data[i][7] !== "Archivado") {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+
+    if (rowIndex > 0) {
+      return updateProjectData(data[rowIndex-1][0], datos);
+    }
+
+    // Continuar con creación
     const data = sheet.getDataRange().getValues();
     const existe = data.some(row => row[1] === datos.nombreProceso && row[6] === "Activo");
 
@@ -46,6 +64,7 @@ function crearNuevoProyecto(datos) {
     ];
 
     sheet.appendRow(nuevaFila);
+    logAudit("Crear Proyecto", `Nuevo proyecto: ${datos.nombreProceso}`, idProyecto);
 
     // 4. Crear hoja visual y links
     const vsmSheet = formatearHojaVSM(sheetName);
@@ -57,14 +76,56 @@ function crearNuevoProyecto(datos) {
     sheet.getRange(lastRow, CONFIG.COLUMNAS.PROYECTOS.URL_ACTUAL).setValue(urlActual);
 
     return {
-      success: true,
+      status: 'success',
       idProyecto: idProyecto,
-      mensaje: "Proyecto creado exitosamente."
+      message: "Proyecto creado exitosamente."
     };
 
   } catch (e) {
-    return { success: false, mensaje: e.toString() };
+    return { status: 'error', message: e.toString() };
+  } finally {
+    lock.releaseLock();
   }
+}
+
+/**
+ * Actualiza los datos de un proyecto existente
+ */
+function updateProjectData(idProyecto, datos) {
+  const lock = LockService.getScriptLock();
+  try {
+    lock.waitLock(10000);
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(CONFIG.HOJAS.PROYECTOS);
+    const data = sheet.getDataRange().getValues();
+
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === idProyecto) {
+        const row = i + 1;
+        sheet.getRange(row, 2).setValue(datos.nombreProceso);
+        sheet.getRange(row, 3).setValue(datos.areaResponsable);
+        sheet.getRange(row, 4).setValue(datos.responsableNombre);
+        sheet.getRange(row, 5).setValue(datos.responsableEmail);
+        sheet.getRange(row, 7).setValue(new Date()); // Fecha Mod
+        sheet.getRange(row, 18).setValue(datos.observaciones);
+
+        logAudit("Actualizar Proyecto", `Modificación: ${datos.nombreProceso}`, idProyecto);
+        return { status: 'success', message: "Proyecto actualizado correctamente." };
+      }
+    }
+    return { status: 'error', message: "No se encontró el proyecto para actualizar." };
+  } catch (e) {
+    return { status: 'error', message: e.toString() };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Función legacy para compatibilidad
+ */
+function crearNuevoProyecto(datos) {
+  return saveProjectData(datos);
 }
 
 /**
