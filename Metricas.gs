@@ -75,3 +75,34 @@ function actualizarDashboard() {
   // el refresco de datos o actualizar gráficos complejos si fuera necesario.
   SpreadsheetApp.flush();
 }
+
+/**
+ * Retorna estadísticas consolidadas para el Dashboard de la Web App
+ */
+function getDashboardStats() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const proySheet = ss.getSheetByName(CONFIG.HOJAS.PROYECTOS);
+  if (!proySheet) return {};
+
+  const data = proySheet.getDataRange().getValues();
+  data.shift(); // Headers
+
+  const stats = {
+    total: data.length,
+    estados: {
+      "Activo": 0,
+      "En Pausa": 0,
+      "Completado": 0,
+      "Archivado": 0
+    },
+    ahorroTotal: 0
+  };
+
+  data.forEach(row => {
+    const est = row[6];
+    if (stats.estados[est] !== undefined) stats.estados[est]++;
+    stats.ahorroTotal += (parseFloat(row[14]) || 0);
+  });
+
+  return stats;
+}

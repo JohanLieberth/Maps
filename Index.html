@@ -3,89 +3,238 @@
   <head>
     <base target="_top">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
-      body { padding-top: 20px; background-color: #f8f9fa; }
-      .container { max-width: 800px; }
+      body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+      .sidebar { min-height: 100vh; background: #2c3e50; color: white; padding-top: 20px; }
+      .nav-link { color: rgba(255,255,255,0.7); cursor: pointer; transition: 0.3s; }
+      .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,0.1); }
+      .main-content { padding: 30px; }
+      .card { border: none; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
       .view { display: none; }
       .view.active { display: block; }
-      .card { box-shadow: 0 4px 12px rgba(0,0,0,0.05); border: none; }
-      .nav-link { cursor: pointer; }
+      .badge-Activo { background-color: #27ae60; }
+      .badge-Pausa { background-color: #f1c40f; color: black; }
+      .badge-Completado { background-color: #2980b9; }
+      .badge-Archivado { background-color: #7f8c8d; }
+      .loading-spinner { display: none; }
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-      <div class="container-fluid">
-        <span class="navbar-brand">VSM Lean Digital</span>
-        <div class="navbar-nav">
-          <a class="nav-link active" onclick="showView('menu')">Inicio</a>
-          <a class="nav-link" onclick="showView('proyectos')">Proyectos</a>
-          <a class="nav-link" onclick="showView('pasos')">Pasos</a>
-        </div>
-      </div>
-    </nav>
+    <div class="container-fluid">
+      <div class="row">
+        <!-- SIDEBAR -->
+        <nav class="col-md-2 d-none d-md-block sidebar">
+          <div class="text-center mb-4">
+            <h4 class="fw-bold">VSM LEAN</h4>
+            <hr>
+          </div>
+          <ul class="nav flex-column">
+            <li class="nav-item">
+              <a class="nav-link active" onclick="loadView('dashboard')"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" onclick="loadView('listado')"><i class="bi bi-folder2-open me-2"></i> Proyectos</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" onclick="loadView('nuevo-proy')"><i class="bi bi-plus-circle me-2"></i> Nuevo Proyecto</a>
+            </li>
+          </ul>
+        </nav>
 
-    <div class="container">
-      <!-- VISTA MENU PRINCIPAL -->
-      <div id="view-menu" class="view active">
-        <div class="text-center mb-5">
-          <h2>Panel de Control Lean</h2>
-          <p class="lead">Gestione sus procesos administrativos sin salir del navegador.</p>
-        </div>
-        <div class="row">
-          <div class="col-md-6 mb-3">
-            <div class="card h-100">
-              <div class="card-body text-center">
-                <h3>📁</h3>
-                <h5 class="card-title">Proyectos</h5>
-                <p>Configure nuevos mapas de valor y defina responsables.</p>
-                <button class="btn btn-outline-primary" onclick="showView('proyectos')">Ir a Proyectos</button>
+        <!-- MAIN -->
+        <main class="col-md-10 main-content">
+          <div id="loader" class="text-center mb-4 loading-spinner">
+             <div class="spinner-border text-primary" role="status"></div>
+          </div>
+
+          <!-- DASHBOARD -->
+          <div id="view-dashboard" class="view active">
+            <h2 class="mb-4">Dashboard de Eficiencia</h2>
+            <div class="row" id="dash-stats">
+              <!-- Cargado dinámicamente -->
+            </div>
+          </div>
+
+          <!-- LISTADO PROYECTOS -->
+          <div id="view-listado" class="view">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h2>Catálogo de Proyectos</h2>
+              <button class="btn btn-primary" onclick="loadView('nuevo-proy')">Nuevo Proyecto</button>
+            </div>
+            <div class="card">
+              <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th>ID</th>
+                      <th>Proceso</th>
+                      <th>Área</th>
+                      <th>Estado</th>
+                      <th>PCE %</th>
+                      <th class="text-end">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="lista-proyectos-body">
+                    <!-- Dinámico -->
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
-          <div class="col-md-6 mb-3">
-            <div class="card h-100">
-              <div class="card-body text-center">
-                <h3>⏱️</h3>
-                <h5 class="card-title">Inventario de Pasos</h5>
-                <p>Documente actividades actuales o proponga mejoras.</p>
-                <button class="btn btn-outline-success" onclick="showView('pasos')">Ir a Pasos</button>
+
+          <!-- FORM NUEVO PROYECTO -->
+          <div id="view-nuevo-proy" class="view">
+            <div class="card mx-auto" style="max-width: 600px;">
+              <div class="card-body">
+                <h3 class="mb-4">Configurar Nuevo Mapa</h3>
+                <?!= include('Form_NuevoProyecto_Inner'); ?>
               </div>
             </div>
           </div>
-        </div>
-      </div>
 
-      <!-- VISTA NUEVO PROYECTO -->
-      <div id="view-proyectos" class="view">
-        <div class="card">
-          <div class="card-body">
-            <h4 class="card-title mb-4">Nuevo Proyecto VSM</h4>
-            <?!= include('Form_NuevoProyecto_Inner'); ?>
-            <button class="btn btn-link mt-3" onclick="showView('menu')">Volver</button>
+          <!-- FORM AGREGAR PASO -->
+          <div id="view-agregar-paso" class="view">
+            <div class="card mx-auto" style="max-width: 600px;">
+              <div class="card-body">
+                <h3 class="mb-4">Agregar Actividad al Proyecto</h3>
+                <div id="active-project-info" class="alert alert-info py-2 small mb-3"></div>
+                <?!= include('Form_NuevoPaso_Inner'); ?>
+                <button class="btn btn-link mt-2" onclick="loadView('listado')">Volver al listado</button>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- VISTA NUEVO PASO -->
-      <div id="view-pasos" class="view">
-        <div class="card">
-          <div class="card-body">
-            <h4 class="card-title mb-4">Registro de Actividad</h4>
-            <?!= include('Form_NuevoPaso_Inner'); ?>
-            <button class="btn btn-link mt-3" onclick="showView('menu')">Volver</button>
+          <!-- VISTA MODIFICAR ACTIVIDADES -->
+          <div id="view-ver-actividades" class="view">
+             <div class="d-flex justify-content-between align-items-center mb-4">
+              <h2 id="titulo-actividades">Actividades del Proyecto</h2>
+              <button class="btn btn-outline-secondary" onclick="loadView('listado')">Volver</button>
+            </div>
+            <div class="card">
+              <div class="card-body p-0" id="lista-actividades-container">
+                <!-- Dinámico -->
+              </div>
+            </div>
           </div>
-        </div>
+
+        </main>
       </div>
     </div>
 
     <script>
-      function showView(viewId) {
+      function toggleLoader(show) {
+        document.getElementById('loader').style.display = show ? 'block' : 'none';
+      }
+
+      function loadView(viewId, params = {}) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById('view-' + viewId).classList.add('active');
 
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        // Simplemente marcamos como activo el link que corresponda si fuera necesario
+        // (Opcional) Activar link en sidebar
+
+        if (viewId === 'dashboard') loadDashboard();
+        if (viewId === 'listado') loadProjectList();
+        if (viewId === 'agregar-paso' && params.id) {
+          document.getElementById('idProy').value = params.id;
+          document.getElementById('active-project-info').innerText = "Proyecto Seleccionado: " + params.nombre;
+        }
+        if (viewId === 'ver-actividades' && params.id) {
+          loadActivities(params.id, params.nombre);
+        }
       }
+
+      function loadDashboard() {
+        toggleLoader(true);
+        google.script.run
+          .withSuccessHandler(stats => {
+            toggleLoader(false);
+            const container = document.getElementById('dash-stats');
+            container.innerHTML = `
+              <div class="col-md-3">
+                <div class="card p-4 text-center">
+                  <h1 class="text-primary">${stats.total}</h1>
+                  <p class="text-muted mb-0">Total Proyectos</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card p-4 text-center">
+                  <h1 class="text-success">${stats.estados.Activo}</h1>
+                  <p class="text-muted mb-0">Activos</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card p-4 text-center">
+                  <h1 class="text-info">${stats.estados.Completado}</h1>
+                  <p class="text-muted mb-0">Completados</p>
+                </div>
+              </div>
+              <div class="col-md-3">
+                <div class="card p-4 text-center">
+                  <h1 class="text-warning">${stats.ahorroTotal.toFixed(1)}</h1>
+                  <p class="text-muted mb-0">Días-Hombre Ahorrados</p>
+                </div>
+              </div>
+            `;
+          })
+          .getDashboardStats();
+      }
+
+      function loadProjectList() {
+        toggleLoader(true);
+        google.script.run
+          .withSuccessHandler(projects => {
+            toggleLoader(false);
+            const tbody = document.getElementById('lista-proyectos-body');
+            tbody.innerHTML = '';
+            projects.forEach(p => {
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td class="small fw-bold">${p.id}</td>
+                <td>${p.nombre}</td>
+                <td class="small">${p.area}</td>
+                <td><span class="badge badge-${p.estado.split(' ')[0]}">${p.estado}</span></td>
+                <td>${(p.pce * 100).toFixed(1)}%</td>
+                <td class="text-end">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-success" onclick="loadView('agregar-paso', {id: '${p.id}', nombre: '${p.nombre}'})" title="Agregar Actividad">
+                      <i class="bi bi-plus-lg"></i>
+                    </button>
+                    <button class="btn btn-outline-primary" onclick="loadView('ver-actividades', {id: '${p.id}', nombre: '${p.nombre}'})" title="Modificar Actividades">
+                      <i class="bi bi-list-task"></i>
+                    </button>
+                  </div>
+                </td>
+              `;
+              tbody.appendChild(tr);
+            });
+          })
+          .getProjectsData();
+      }
+
+      function loadActivities(id, nombre) {
+        toggleLoader(true);
+        document.getElementById('titulo-actividades').innerText = "Actividades: " + nombre;
+        google.script.run
+          .withSuccessHandler(activities => {
+            toggleLoader(false);
+            const container = document.getElementById('lista-actividades-container');
+            if (activities.length === 0) {
+              container.innerHTML = '<div class="p-4 text-center text-muted">No hay actividades registradas para este proyecto.</div>';
+              return;
+            }
+            let html = '<table class="table table-sm mb-0"><thead><tr><th>Orden</th><th>Escenario</th><th>Nombre</th><th>Valor</th><th>LT (min)</th></tr></thead><tbody>';
+            activities.forEach(a => {
+              html += `<tr><td>${a.secuencia}</td><td>${a.escenario}</td><td>${a.nombre}</td><td>${a.valor}</td><td>${a.leadTime}</td></tr>`;
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+          })
+          .getActivitiesByProject(id);
+      }
+
+      window.onload = () => loadDashboard();
     </script>
   </body>
 </html>
