@@ -304,14 +304,16 @@ function registrarParticipante(email, nombre, alias) {
     const data = sheet.getDataRange().getValues();
 
     // Validar duplicados
-    const existe = data.some(row => row[0] === email);
-    if (existe) return { success: false, message: 'El email ya está registrado.' };
+    const participante = data.find(row => row[0] === email);
+    if (participante) {
+      return { success: true, message: '¡Bienvenido de nuevo, ' + participante[2] + '!', isExisting: true };
+    }
 
     const aliasExiste = data.some(row => row[2] === alias);
     if (aliasExiste) return { success: false, message: 'El alias ya está en uso.' };
 
     sheet.appendRow([email, nombre, alias, 0, 0, 0, 0, new Date()]);
-    return { success: true, message: 'Registro exitoso.' };
+    return { success: true, message: 'Registro exitoso.', isExisting: false };
   } catch (e) {
     logError('registrarParticipante', e.message, email);
     return { success: false, message: 'Error en el servidor.' };

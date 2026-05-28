@@ -336,6 +336,23 @@
     <div id="view-pronosticos" class="view">
       <h2 style="text-align: center;">REGISTRAR MIS PRONÓSTICOS</h2>
       <p style="text-align: center; font-size: 0.8rem;">Cierre 24h antes de cada partido. El resultado final incluye penales.</p>
+
+      <!-- Filtro de Fases -->
+      <div style="text-align: center; margin-bottom: 20px;">
+        <select id="filtro-fase" onchange="renderizarListaPartidos(partidosGlobal, pronosticosUsuario)"
+          style="padding: 10px; border-radius: 8px; border: 2px solid var(--gold);">
+          <option value="Todas">Todas las Fases</option>
+          <option value="Grupos">Fase de Grupos</option>
+          <option value="Ronda de 32">Ronda de 32</option>
+          <option value="Octavos">Octavos de Final</option>
+          <option value="Cuartos">Cuartos de Final</option>
+          <option value="Semifinales">Semifinales</option>
+          <option value="Tercer Puesto">Tercer Puesto</option>
+          <option value="Final">Final</option>
+        </select>
+        <div id="match-counter" style="margin-top: 10px; font-weight: bold; color: var(--gold);"></div>
+      </div>
+
       <div id="lista-partidos" class="match-list">
         <!-- Se llena dinámicamente -->
       </div>
@@ -420,13 +437,16 @@
         .withSuccessHandler(p => {
           if (p) {
             userData = p;
-            const html = `
-              <div class="card"><h3>${p.Puntos_Totales}</h3><p>Puntos</p></div>
-              <div class="card"><h3>${p.Aciertos_Exactos}</h3><p>Exactos</p></div>
-              <div class="card"><h3>${p.Aciertos_Ganador}</h3><p>Ganadores</p></div>
-              <div class="card"><h3>${p.Errores}</h3><p>Errores</p></div>
-            `;
-            document.getElementById('dashboard-stats').innerHTML = html;
+            google.script.run.withSuccessHandler(pronosticos => {
+              const count = pronosticos.filter(pr => pr.Gol_Local !== "" && pr.Gol_Local !== undefined).length;
+              const html = `
+                <div class="card"><h3>${p.Puntos_Totales}</h3><p>Puntos</p></div>
+                <div class="card"><h3>${p.Aciertos_Exactos}</h3><p>Exactos</p></div>
+                <div class="card"><h3>${count}/104</h3><p>Completados</p></div>
+                <div class="card"><h3>${p.Errores}</h3><p>Errores</p></div>
+              `;
+              document.getElementById('dashboard-stats').innerHTML = html;
+            }).obtenerPronosticos(userEmail);
           }
         })
         .obtenerParticipante(userEmail);
@@ -450,12 +470,19 @@
 
     function renderizarListaPartidos(partidos, pronosticos) {
       const container = document.getElementById('lista-partidos');
+      const filtro = document.getElementById('filtro-fase').value;
       container.innerHTML = "";
 
       let faseActual = "";
       const ahora = new Date();
+      let matchesShown = 0;
+      let predictedCount = 0;
 
       partidos.sort((a, b) => a.Match_Num - b.Match_Num).forEach(p => {
+        if (filtro !== 'Todas' && p.Fase !== filtro) return;
+
+        matchesShown++;
+
         if (p.Fase !== faseActual) {
           faseActual = p.Fase;
           const header = document.createElement('div');
@@ -465,13 +492,18 @@
         }
 
         const pronostico = pronosticos.find(pr => pr.ID_Partido === p.ID_Partido);
-        const golL = pronostico ? pronostico.Gol_Local : "";
-        const golV = pronostico ? pronostico.Gol_Visita : "";
+        const golL = (pronostico && pronostico.Gol_Local !== undefined) ? pronostico.Gol_Local : "";
+        const golV = (pronostico && pronostico.Gol_Visita !== undefined) ? pronostico.Gol_Visita : "";
+
+        if (golL !== "") predictedCount++;
 
         // Validar estado y cierre
         const fechaCierre = new Date(p.Fecha_Cierre);
         const estaCerrado = ahora >= fechaCierre;
-        const estaJugado = p.Gol_Local_Real !== "";
+        const estaJugado = p.Gol_Local_Real !== "" && p.Gol_Local_Real !== null;
+
+        // Validar si equipos son placeholders
+        const esPlaceholder = p.Equipo_Local.includes('Grupo') || p.Equipo_Local.includes('Ganador M') || p.Equipo_Local.includes('Perdedor M');
 
         let badgeClass = "badge-abierto";
         let badgeText = "ABIERTO";
@@ -482,8 +514,10 @@
         } else if (estaCerrado) {
           badgeClass = "badge-cerrado";
           badgeText = "CERRADO";
+        } else if (esPlaceholder) {
+          badgeClass = "badge-cerrado";
+          badgeText = "ESPERANDO EQUIPOS";
         } else {
-          // Si faltan menos de 48h
           const diff = fechaCierre - ahora;
           if (diff < 48 * 60 * 60 * 1000) {
             badgeClass = "badge-warning";
@@ -494,6 +528,7 @@
 
         const row = document.createElement('div');
         row.className = 'match-row';
+        row.style.opacity = esPlaceholder ? '0.6' : '1';
         row.innerHTML = `
           <div class="team-container local">
             <span class="team-name">${p.Equipo_Local}</span>
@@ -501,10 +536,10 @@
           </div>
           <div class="score-inputs">
             <input type="number" min="0" max="20" value="${golL}"
-              id="L-${p.ID_Partido}" ${estaCerrado ? 'disabled' : ''}>
+              id="L-${p.ID_Partido}" ${estaCerrado || esPlaceholder ? 'disabled' : ''}>
             <span>-</span>
             <input type="number" min="0" max="20" value="${golV}"
-              id="V-${p.ID_Partido}" ${estaCerrado ? 'disabled' : ''}>
+              id="V-${p.ID_Partido}" ${estaCerrado || esPlaceholder ? 'disabled' : ''}>
           </div>
           <div class="team-container visita">
             <span class="flag">${p.Bandera_Visita || '🏳️'}</span>
@@ -513,10 +548,13 @@
           <div style="width: 15%; text-align: center;">
             <span class="badge ${badgeClass}">${badgeText}</span>
             ${estaJugado ? `<small>Res: ${p.Gol_Local_Real}-${p.Gol_Visita_Real}</small>` : ''}
+            ${pronostico && !estaJugado ? `<small style="color:var(--gold); display:block;">Guardado: ${golL}-${golV}</small>` : ''}
           </div>
         `;
         container.appendChild(row);
       });
+
+      document.getElementById('match-counter').innerText = `Pronosticados: ${predictedCount} / ${partidos.length} partidos totales`;
     }
 
     function guardarTodo() {
