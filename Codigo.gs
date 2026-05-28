@@ -96,15 +96,32 @@ function include(filename) {
 // --- FUNCIONES DE BASE DE DATOS ---
 
 function getSheetData(sheetName) {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheetByName(sheetName);
-  const data = sheet.getDataRange().getValues();
-  const headers = data.shift();
-  return data.map(row => {
-    const obj = {};
-    headers.forEach((header, i) => obj[header] = row[i]);
-    return obj;
-  });
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(sheetName);
+
+    // Auto-inicialización si la hoja no existe
+    if (!sheet) {
+      inicializarSistema();
+      sheet = ss.getSheetByName(sheetName);
+      if (!sheet) return [];
+    }
+
+    const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return []; // Solo encabezados o vacía
+
+    const headers = data.shift();
+    return data.map(row => {
+      const obj = {};
+      headers.forEach((header, i) => {
+        if (header) obj[header] = row[i];
+      });
+      return obj;
+    });
+  } catch (e) {
+    logError('getSheetData', e.message, sheetName);
+    return [];
+  }
 }
 
 function getConfig() {
@@ -149,12 +166,48 @@ function seedPartidos() {
 
   // Función auxiliar para calcular fecha de cierre (24h antes)
   const getFechaCierre = (fecha, hora) => {
-    const parts = hora.split(':');
-    const offset = parts[2].includes('-') ? '-' + parts[2].split('-')[1] : (parts[2].includes('+') ? '+' + parts[2].split('+')[1] : '');
-    const cleanHora = parts[0] + ':' + parts[1] + ':00';
-    const f = new Date(fecha + 'T' + cleanHora + offset);
-    f.setHours(f.getHours() - 24);
-    return f;
+    try {
+      const parts = hora.split(':');
+      // Asegurar formato HH:MM:SS
+      const hh = parts[0].padStart(2, '0');
+      const mm = parts[1].padStart(2, '0');
+
+      let ss = "00";
+      let offset = "";
+
+      if (parts[2]) {
+        if (parts[2].includes('-')) {
+          const sParts = parts[2].split('-');
+          ss = sParts[0].padStart(2, '0');
+          offset = '-' + sParts[1];
+        } else if (parts[2].includes('+')) {
+          const sParts = parts[2].split('+');
+          ss = sParts[0].padStart(2, '0');
+          offset = '+' + sParts[1];
+        } else {
+          ss = parts[2].padStart(2, '0');
+        }
+      }
+
+      const cleanHora = `${hh}:${mm}:${ss}${offset}`;
+      const f = new Date(fecha + 'T' + cleanHora);
+
+      // Validar si la fecha es válida
+      if (isNaN(f.getTime())) {
+        // Fallback a fecha del partido sin offset si falla
+        const fallback = new Date(fecha + 'T' + hh + ':' + mm + ':00');
+        fallback.setHours(fallback.getHours() - 24);
+        return fallback;
+      }
+
+      f.setHours(f.getHours() - 24);
+      return f;
+    } catch (e) {
+      // Último recurso
+      const lastResort = new Date(fecha);
+      lastResort.setHours(lastResort.getHours() - 24);
+      return lastResort;
+    }
   };
 
   // GRUPO A
@@ -298,6 +351,7 @@ function seedPartidos() {
   partidosData.push(['M104', 'Final', '', '2026-07-19', '15:00:00-04:00', 'Ganador M101', '', 'Ganador M102', '', '', '', 'Abierto', getFechaCierre('2026-07-19', '15:00:00-04:00'), '', 104]);
 
   partidoSheet.getRange(2, 1, partidosData.length, 15).setValues(partidosData);
+  SpreadsheetApp.flush();
 }
 
 // --- AUTENTICACIÓN Y PARTICIPANTES ---
@@ -757,16 +811,21 @@ function logError(funcion, error, detalle) {
 
 function obtenerPartidos() {
   try {
-    const data = getSheetData('Partidos');
+    let data = getSheetData('Partidos');
+
+    // Si no hay partidos o las hojas no están listas, intentamos auto-reparar
     if (data.length === 0) {
-      // Si no hay datos, intentar poblar automáticamente
+      inicializarSistema();
       seedPartidos();
-      return getSheetData('Partidos');
+      data = getSheetData('Partidos');
     }
+
     return data;
   } catch (e) {
     logError('obtenerPartidos', e.message, '');
-    return [];
+    // En caso de error crítico, intentamos inicializar una última vez
+    try { inicializarSistema(); seedPartidos(); } catch(err) {}
+    return getSheetData('Partidos');
   }
 }
 

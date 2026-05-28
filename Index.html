@@ -479,7 +479,7 @@
             .obtenerPronosticos(userEmail);
         })
         .withFailureHandler(err => {
-          alert("Error crítico cargando partidos: " + err);
+          alert("Error crítico cargando partidos: " + err + "\n\nPor favor intenta refrescar la página o contacta al administrador.");
           hideSpinner();
         })
         .obtenerPartidos();
@@ -572,6 +572,10 @@
       });
 
       document.getElementById('match-counter').innerText = `Pronosticados: ${predictedCount} / ${partidos.length} partidos totales`;
+
+      if (matchesShown === 0) {
+        container.innerHTML = `<p style="text-align:center; padding:20px; color:var(--red);">No se encontraron partidos para esta fase.</p>`;
+      }
     }
 
     function guardarTodo() {
