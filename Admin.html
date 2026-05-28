@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
+    input { width: 50px; text-align: center; }
+    .btn { background: #C9A227; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h2>Panel de Administrador</h2>
+  <div style="margin-bottom: 20px;">
+    <button class="btn" onclick="recalcular()">Recalcular Puntos</button>
+    <button class="btn" onclick="testData()">Insertar Datos Prueba</button>
+  </div>
+  <div id="admin-content">
+    <p>Cargando partidos...</p>
+  </div>
+
+  <script>
+    function loadPartidos() {
+      google.script.run.withSuccessHandler(partidos => {
+        const container = document.getElementById('admin-content');
+        container.innerHTML = "";
+        partidos.forEach(p => {
+          const div = document.createElement('div');
+          div.className = 'card';
+          div.innerHTML = `
+            <strong>${p.ID_Partido}</strong>: ${p.Equipo_Local} vs ${p.Equipo_Visita}
+            <input type="number" id="L-${p.ID_Partido}" value="${p.Gol_Local_Real}"> -
+            <input type="number" id="V-${p.ID_Partido}" value="${p.Gol_Visita_Real}">
+            <button class="btn" onclick="saveResult('${p.ID_Partido}')">Actualizar</button>
+          `;
+          container.appendChild(div);
+        });
+      }).obtenerPartidos();
+    }
+
+    function saveResult(id) {
+      const gL = document.getElementById('L-' + id).value;
+      const gV = document.getElementById('V-' + id).value;
+      if (gL === "" || gV === "") {
+        alert("Ingresa ambos goles.");
+        return;
+      }
+      google.script.run.withSuccessHandler(res => {
+        alert(res.message);
+        loadPartidos();
+      }).actualizarResultadoManual(id, parseInt(gL), parseInt(gV));
+    }
+
+    function recalcular() {
+      google.script.run.withSuccessHandler(res => {
+        alert(res.message);
+      }).recalcularTodosLosPuntos();
+    }
+
+    function testData() {
+      google.script.run.withSuccessHandler(res => {
+        alert("Datos de prueba insertados.");
+        loadPartidos();
+      }).insertarDatosPrueba();
+    }
+
+    loadPartidos();
+  </script>
+</body>
+</html>
