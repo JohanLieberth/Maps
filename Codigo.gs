@@ -141,13 +141,18 @@ function seedPartidos() {
 
   // Limpiar y resetear Partidos
   const partidoSheet = ss.getSheetByName('Partidos');
-  partidoSheet.getRange(2, 1, partidoSheet.getLastRow() > 1 ? partidoSheet.getLastRow() : 1, 15).clearContent();
+  if (partidoSheet.getLastRow() > 1) {
+    partidoSheet.getRange(2, 1, partidoSheet.getLastRow() - 1, 15).clearContent();
+  }
 
   const partidosData = [];
 
   // Función auxiliar para calcular fecha de cierre (24h antes)
   const getFechaCierre = (fecha, hora) => {
-    const f = new Date(fecha + 'T' + hora);
+    const parts = hora.split(':');
+    const offset = parts[2].includes('-') ? '-' + parts[2].split('-')[1] : (parts[2].includes('+') ? '+' + parts[2].split('+')[1] : '');
+    const cleanHora = parts[0] + ':' + parts[1] + ':00';
+    const f = new Date(fecha + 'T' + cleanHora + offset);
     f.setHours(f.getHours() - 24);
     return f;
   };
@@ -751,7 +756,18 @@ function logError(funcion, error, detalle) {
 }
 
 function obtenerPartidos() {
-  return getSheetData('Partidos');
+  try {
+    const data = getSheetData('Partidos');
+    if (data.length === 0) {
+      // Si no hay datos, intentar poblar automáticamente
+      seedPartidos();
+      return getSheetData('Partidos');
+    }
+    return data;
+  } catch (e) {
+    logError('obtenerPartidos', e.message, '');
+    return [];
+  }
 }
 
 function enviarNotificaciones() {

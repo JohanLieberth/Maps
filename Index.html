@@ -418,7 +418,7 @@
       showSpinner();
       google.script.run
         .withSuccessHandler(res => {
-          if (res.success || res.message.includes("ya está registrado")) {
+          if (res.success) {
             userEmail = email;
             document.getElementById('navbar').style.display = 'flex';
             document.getElementById('view-login').style.display = 'none';
@@ -427,6 +427,10 @@
           } else {
             alert(res.message);
           }
+          hideSpinner();
+        })
+        .withFailureHandler(err => {
+          alert("Error de conexión: " + err);
           hideSpinner();
         })
         .registrarParticipante(email, nombre, alias);
@@ -456,14 +460,27 @@
       showSpinner();
       google.script.run
         .withSuccessHandler(partidos => {
+          if (!partidos || partidos.length === 0) {
+             alert("No se pudieron cargar los partidos. Contacta al admin.");
+             hideSpinner();
+             return;
+          }
           partidosGlobal = partidos;
           google.script.run
             .withSuccessHandler(pronosticos => {
-              pronosticosUsuario = pronosticos;
-              renderizarListaPartidos(partidos, pronosticos);
+              pronosticosUsuario = pronosticos || [];
+              renderizarListaPartidos(partidosGlobal, pronosticosUsuario);
+              hideSpinner();
+            })
+            .withFailureHandler(err => {
+              alert("Error cargando pronósticos: " + err);
               hideSpinner();
             })
             .obtenerPronosticos(userEmail);
+        })
+        .withFailureHandler(err => {
+          alert("Error crítico cargando partidos: " + err);
+          hideSpinner();
         })
         .obtenerPartidos();
     }
