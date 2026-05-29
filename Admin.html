@@ -2,69 +2,86 @@
 <html>
 <head>
   <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin - Quiniela 2026</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .card { border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-radius: 8px; }
-    input { width: 50px; text-align: center; }
-    .btn { background: #C9A227; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 4px; }
+    body { font-family: sans-serif; background: #f1f5f9; padding: 20px; color: #1e293b; }
+    .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 800px; margin: 0 auto; }
+    h1 { color: #4f46e5; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    th { background: #f8fafc; }
+    input { width: 50px; padding: 5px; border: 1px solid #cbd5e1; border-radius: 4px; text-align: center; }
+    .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; }
+    .btn-save { background: #10b981; }
+    .btn-seed { background: #ef4444; margin-bottom: 20px; }
+    #status { margin-top: 10px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h2>Panel de Administrador</h2>
-  <div style="margin-bottom: 20px;">
-    <button class="btn" onclick="recalcular()">Recalcular Puntos</button>
-    <button class="btn" onclick="testData()">Insertar Datos Prueba</button>
-  </div>
-  <div id="admin-content">
-    <p>Cargando partidos...</p>
+  <div class="card">
+    <h1>Panel de Administración ⚽</h1>
+    <p>Solo visible para: <?= Session.getEffectiveUser().getEmail() ?></p>
+
+    <button class="btn btn-seed" onclick="seed()">Resetear Torneo (Seed)</button>
+    <button class="btn btn-seed" style="background:#3b82f6" onclick="testData()">Insertar Datos Prueba</button>
+    <div id="status"></div>
+
+    <h3>Actualizar Resultados</h3>
+    <div id="lista-admin">Cargando partidos...</div>
   </div>
 
   <script>
-    function loadPartidos() {
-      google.script.run.withSuccessHandler(partidos => {
-        const container = document.getElementById('admin-content');
-        container.innerHTML = "";
-        partidos.forEach(p => {
-          const div = document.createElement('div');
-          div.className = 'card';
-          div.innerHTML = `
-            <strong>${p.ID_Partido}</strong>: ${p.Equipo_Local} vs ${p.Equipo_Visita}
-            <input type="number" id="L-${p.ID_Partido}" value="${p.Gol_Local_Real}"> -
-            <input type="number" id="V-${p.ID_Partido}" value="${p.Gol_Visita_Real}">
-            <button class="btn" onclick="saveResult('${p.ID_Partido}')">Actualizar</button>
-          `;
-          container.appendChild(div);
-        });
-      }).obtenerPartidos();
-    }
-
-    function saveResult(id) {
-      const gL = document.getElementById('L-' + id).value;
-      const gV = document.getElementById('V-' + id).value;
-      if (gL === "" || gV === "") {
-        alert("Ingresa ambos goles.");
-        return;
-      }
-      google.script.run.withSuccessHandler(res => {
-        alert(res.message);
-        loadPartidos();
-      }).actualizarResultadoManual(id, parseInt(gL), parseInt(gV));
-    }
-
-    function recalcular() {
-      google.script.run.withSuccessHandler(res => {
-        alert(res.message);
-      }).recalcularTodosLosPuntos();
+    function seed() {
+      if(!confirm("¿Borrar todos los datos y reiniciar el calendario?")) return;
+      document.getElementById('status').innerText = "Reseteando...";
+      google.script.run.withSuccessHandler(() => {
+        document.getElementById('status').innerText = "Torneo reseteado exitosamente.";
+        cargar();
+      }).seedPartidos();
     }
 
     function testData() {
       google.script.run.withSuccessHandler(res => {
-        alert("Datos de prueba insertados.");
-        loadPartidos();
+        document.getElementById('status').innerText = res.message;
+        cargar();
       }).insertarDatosPrueba();
     }
 
-    loadPartidos();
+    function cargar() {
+      google.script.run.withSuccessHandler(partidos => {
+        let h = `<table><tr><th>ID</th><th>Partido</th><th>Resultado</th><th>Acción</th></tr>`;
+        partidos.forEach(p => {
+          const resL = p.Gol_Local_Real !== "" ? p.Gol_Local_Real : "";
+          const resV = p.Gol_Visita_Real !== "" ? p.Gol_Visita_Real : "";
+          h += `<tr>
+            <td>${p.ID_Partido}</td>
+            <td>${p.Equipo_Local} vs ${p.Equipo_Visita}</td>
+            <td>
+              <input type="number" id="L-${p.ID_Partido}" value="${resL}"> -
+              <input type="number" id="V-${p.ID_Partido}" value="${resV}">
+            </td>
+            <td><button class="btn btn-save" onclick="guardar('${p.ID_Partido}')">Guardar</button></td>
+          </tr>`;
+        });
+        h += `</table>`;
+        document.getElementById('lista-admin').innerHTML = h;
+      }).obtenerPartidos();
+    }
+
+    function guardar(id) {
+      const gl = document.getElementById('L-'+id).value;
+      const gv = document.getElementById('V-'+id).value;
+      if(gl === "" || gv === "") return alert("Ingresa ambos goles");
+
+      google.script.run.withSuccessHandler(res => {
+        document.getElementById('status').innerText = res.message;
+        if(res.success) cargar();
+      }).actualizarResultadoManual(id, parseInt(gl), parseInt(gv));
+    }
+
+    window.onload = cargar;
   </script>
 </body>
 </html>
