@@ -1,7 +1,7 @@
 /**
  * SISTEMA DE QUINIELA MUNDIAL 2026
  * Backend Corregido: Google Sheets como Fuente de Verdad.
- * Sincronización robusta y manejo de errores de inicialización.
+ * Sincronización robusta y manejo de errores.
  */
 
 const CONFIG_BASE = {
@@ -17,18 +17,10 @@ const CONFIG_BASE = {
 
 // --- RUTA DE ENTRADA WEB APP ---
 
-/**
- * Función doGet para servir la Web App.
- * Se añade validación robusta para evitar el error 'Cannot read properties of undefined (reading 'parameter')'.
- */
 function doGet(e) {
   var params = {};
-  try {
-    if (e && e.parameter) {
-      params = e.parameter;
-    }
-  } catch (err) {
-    params = {};
+  if (e && e.parameter) {
+    params = e.parameter;
   }
 
   var page = params.p || 'Index';
@@ -36,11 +28,10 @@ function doGet(e) {
   var userEmail = "";
   try {
     userEmail = Session.getEffectiveUser().getEmail();
-  } catch (err) {
+  } catch(err) {
     userEmail = "";
   }
 
-  // Seguridad: Solo el administrador puede ver la página de Admin
   if (page === 'Admin' && userEmail !== config.ADMIN_EMAIL) {
     return HtmlService.createHtmlOutput('<h1>Acceso Denegado</h1><p>Solo el administrador tiene acceso a esta sección.</p>');
   }
@@ -52,13 +43,12 @@ function doGet(e) {
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   } catch (err) {
-    // Fallback a Index si la página solicitada falla o no existe
     if (page !== 'Index') {
       try {
         return HtmlService.createTemplateFromFile('Index').evaluate().setTitle('Quiniela 2026');
-      } catch (err2) {}
+      } catch(err2) {}
     }
-    return HtmlService.createHtmlOutput('<h1>Error al cargar la página: ' + page + '</h1><p>' + err.message + '</p>');
+    return HtmlService.createHtmlOutput('<h1>Error al cargar la página</h1><p>' + err.message + '</p>');
   }
 }
 
@@ -108,9 +98,6 @@ function getConfig() {
   }
 }
 
-/**
- * Normaliza las cabeceras de una hoja para facilitar su mapeo
- */
 function getHeaderMap(headers) {
   var idx = {};
   headers.forEach(function(h, c) {
@@ -136,24 +123,21 @@ function obtenerPartidosParaUsuario(email) {
     var headers = dataFull.shift();
     var idx = getHeaderMap(headers);
 
-    // Mapeo seguro de columnas
     var cID = idx["ID_PARTIDO"], cFase = idx["FASE"], cGrupo = idx["GRUPO"];
     var cFecha = idx["FECHA"], cHora = idx["HORA_UTC"];
     var cLocal = idx["EQUIPO_LOCAL"], cVisita = idx["EQUIPO_VISITA"];
     var cGolLR = idx["GOL_LOCAL_REAL"], cGolVR = idx["GOL_VISITA_REAL"];
     var cEstado = idx["ESTADO"], cMatchN = idx["MATCH_NUM"];
 
-    // Banderas
     var banderasMap = {};
     var hojaBanderas = ss.getSheetByName("Banderas");
     if (hojaBanderas && hojaBanderas.getLastRow() > 1) {
       var dB = hojaBanderas.getDataRange().getValues();
       for (var b = 1; b < dB.length; b++) {
-        if(dB[b][0]) banderasMap[String(dB[b][0]).trim().toLowerCase()] = dB[b][2];
+        if(dB[b][0]) banderasMap[String(dB[b][0]).trim().toLowerCase()] = dB[b][2]; // [0] Nombre, [2] URL
       }
     }
 
-    // Pronósticos
     var pronosUsr = {};
     var hojaPronosticos = ss.getSheetByName("Pronosticos");
     if (hojaPronosticos && hojaPronosticos.getLastRow() > 1) {
@@ -263,7 +247,7 @@ function recalcularTodosLosPuntos() {
     hPronos.getRange(2, 1, rPr.length, dPr[0].length).setValues(rPr);
 
     var hPartic = ss.getSheetByName('Participantes');
-    if (hPartic && hPartic.getLastRow() > 1) {
+    if(hPartic && hPartic.getLastRow() > 1) {
       var dPa = hPartic.getDataRange().getValues();
       var rPa = dPa.slice(1);
       rPa.forEach(function(row) {
@@ -276,10 +260,7 @@ function recalcularTodosLosPuntos() {
       hPartic.getRange(2, 1, rPa.length, dPa[0].length).setValues(rPa);
     }
     return { success: true };
-  } catch (e) {
-    registrarError("recalcularTodosLosPuntos", e);
-    return { success: false, error: e.toString() };
-  }
+  } catch (e) { registrarError("recalcularTodosLosPuntos", e); return { success: false, error: e.toString() }; }
 }
 
 function calcularPuntosIndividual(glr, gvr, glp, gvp, esElim, config) {
@@ -325,10 +306,7 @@ function actualizarFaseEliminatoria() {
     });
     propagarGanadoresBracket(ss, idx);
     return { success: true };
-  } catch (e) {
-    registrarError("actualizarFaseEliminatoria", e);
-    return { success: false, error: e.toString() };
-  }
+  } catch (e) { registrarError("actualizarFaseEliminatoria", e); return { success: false, error: e.toString() }; }
 }
 
 function calcularTablaGrupo(gName, ss, idxP) {
@@ -421,16 +399,16 @@ function obtenerRanking() {
 function guardarPronosticos(email, pronArr) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var hojaPartidos = ss.getSheetByName("Partidos");
-    var hojaPronosticos = ss.getSheetByName("Pronosticos");
-    if (!hojaPronosticos) { ss.insertSheet("Pronosticos").appendRow(['ID_PRONOSTICO', 'EMAIL_PARTICIPANTE', 'ID_PARTIDO', 'GOL_LOCAL', 'GOL_VISITA', 'FECHA_REGISTRO', 'PUNTOS_OBTENIDOS', 'CALCULADO']); hojaPronosticos = ss.getSheetByName("Pronosticos"); }
+    var hPart = ss.getSheetByName("Partidos");
+    var hPronos = ss.getSheetByName("Pronosticos");
+    if (!hPronos) { ss.insertSheet("Pronosticos").appendRow(['ID_PRONOSTICO', 'EMAIL_PARTICIPANTE', 'ID_PARTIDO', 'GOL_LOCAL', 'GOL_VISITA', 'FECHA_REGISTRO', 'PUNTOS_OBTENIDOS', 'CALCULADO']); hPronos = ss.getSheetByName("Pronosticos"); }
 
-    var pD = hojaPartidos.getDataRange().getValues();
+    var pD = hPart.getDataRange().getValues();
     var hHead = pD.shift();
     var idxP = getHeaderMap(hHead);
 
     var ahora = new Date();
-    var userPronos = hojaPronosticos.getDataRange().getValues();
+    var userPronos = hPronos.getDataRange().getValues();
     var userMap = {};
     var mailL = String(email || "").toLowerCase();
     for (var i = 1; i < userPronos.length; i++) { if (String(userPronos[i][1]).toLowerCase() === mailL) userMap[String(userPronos[i][2])] = i + 1; }
@@ -453,30 +431,34 @@ function guardarPronosticos(email, pronArr) {
 
 // --- ADMIN Y INICIALIZACION ---
 
-function actualizarResultadoManual(id, gl, gv) {
-  var config = getConfig();
-  if (Session.getEffectiveUser().getEmail() !== config.ADMIN_EMAIL) return { success: false, error: "No autorizado" };
-  try {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var hoja = ss.getSheetByName('Partidos');
-    var d = hoja.getDataRange().getValues();
-    var idx = getHeaderMap(d[0]);
-    var r = d.findIndex(function(row) { return String(row[0]) == String(id); });
-    if (r > -1) {
-      hoja.getRange(r + 1, idx["GOL_LOCAL_REAL"] + 1, 1, 3).setValues([[gl, gv, "JUGADO"]]);
-      recalcularTodosLosPuntos();
-      actualizarFaseEliminatoria();
-      return { success: true, message: "OK" };
-    }
-    return { success: false, error: "No encontrado" };
-  } catch(e) { return { success: false, error: e.toString() }; }
-}
-
 function inicializarSistemaCompleto() {
   inicializarSistema();
-  seedBanderas();
+  seedEquipos();
   seedPartidos();
   return "Sistema inicializado correctamente.";
+}
+
+function seedEquipos() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("Equipos"); if (!hoja) hoja = ss.insertSheet("Equipos");
+  hoja.clear();
+  var d = [["ID_Equipo", "Nombre_Equipo", "Bandera", "Grupo"]];
+  var teams = [
+    [1, "México", "🇲🇽", "A"], [2, "Sudáfrica", "🇿🇦", "A"], [3, "Corea del Sur", "🇰🇷", "A"], [4, "República Checa", "🇨🇿", "A"],
+    [5, "Canadá", "🇨🇦", "B"], [6, "Bosnia y Herzegovina", "🇧🇦", "B"], [7, "Qatar", "🇶🇦", "B"], [8, "Suiza", "🇨🇭", "B"],
+    [9, "Brasil", "🇧🇷", "C"], [10, "Marruecos", "🇲🇦", "C"], [11, "Haití", "🇭🇹", "C"], [12, "Escocia", "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "C"],
+    [13, "Estados Unidos", "🇺🇸", "D"], [14, "Paraguay", "🇵🇾", "D"], [15, "Australia", "🇦🇺", "D"], [16, "Turquía", "🇹🇷", "D"],
+    [17, "Alemania", "🇩🇪", "E"], [18, "Curazao", "🇨🇼", "E"], [19, "Costa de Marfil", "🇨🇮", "E"], [20, "Ecuador", "🇪🇨", "E"],
+    [21, "Países Bajos", "🇳🇱", "F"], [22, "Japón", "🇯🇵", "F"], [23, "Suecia", "🇸🇪", "F"], [24, "Túnez", "🇹🇳", "F"],
+    [25, "Bélgica", "🇧🇪", "G"], [26, "Egipto", "🇪🇬", "G"], [27, "Irán", "🇮🇷", "G"], [28, "Nueva Zelanda", "🇳🇿", "G"],
+    [29, "España", "🇪🇸", "H"], [30, "Cabo Verde", "🇨🇻", "H"], [31, "Arabia Saudita", "🇸🇦", "H"], [32, "Uruguay", "🇺🇾", "H"],
+    [33, "Francia", "🇫🇷", "I"], [34, "Senegal", "🇸🇳", "I"], [35, "Irak", "🇮🇶", "I"], [36, "Noruega", "🇳🇴", "I"],
+    [37, "Argentina", "🇦🇷", "J"], [38, "Argelia", "🇩🇿", "J"], [39, "Austria", "🇦🇹", "J"], [40, "Jordania", "🇯🇴", "J"],
+    [41, "Portugal", "🇵🇹", "K"], [42, "RD Congo", "🇨🇩", "K"], [43, "Uzbekistán", "🇺🇿", "K"], [44, "Colombia", "🇨🇴", "K"],
+    [45, "Inglaterra", "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "L"], [46, "Croacia", "🇭🇷", "L"], [47, "Ghana", "🇬🇭", "L"], [48, "Panamá", "🇵🇦", "L"]
+  ];
+  teams.forEach(function(t) { d.push(t); });
+  hoja.getRange(1, 1, d.length, 4).setValues(d);
 }
 
 function registrarError(f, e) {
@@ -513,8 +495,33 @@ function seedPartidos() {
   hoja.clear();
   var h = ["ID_Partido", "Fase", "Grupo", "Fecha", "Hora_UTC", "Equipo_Local", "Bandera_Local", "Equipo_Visita", "Bandera_Visita", "Gol_Local_Real", "Gol_Visita_Real", "Estado", "Fecha_Cierre", "Llave", "Match_Num"];
   hoja.getRange(1, 1, 1, h.length).setValues([h]);
-  var p = [["M1", "Fase de Grupos", "A", new Date(2026, 5, 11), "20:00", "México", "", "Corea del Sur", "", "", "", "PENDIENTE", "", "", "1"], ["M2", "Fase de Grupos", "A", new Date(2026, 5, 12), "15:00", "Sudáfrica", "", "República Checa", "", "", "", "PENDIENTE", "", "", "2"], ["M73", "Ronda de 32", "", new Date(2026, 5, 28), "12:00", "2do Grupo A", "", "2do Grupo B", "", "", "", "PENDIENTE", "", "", "73"]];
+
+  var p = [
+    ["M1", "Fase de Grupos", "A", new Date(2026, 5, 11), "20:00", "México", "", "Corea del Sur", "", "", "", "PENDIENTE", "", "", "1"],
+    ["M2", "Fase de Grupos", "A", new Date(2026, 5, 12), "15:00", "Sudáfrica", "", "República Checa", "", "", "", "PENDIENTE", "", "", "2"],
+    ["M3", "Fase de Grupos", "A", new Date(2026, 5, 17), "15:00", "República Checa", "", "Corea del Sur", "", "", "", "PENDIENTE", "", "", "3"],
+    ["M4", "Fase de Grupos", "A", new Date(2026, 5, 17), "20:00", "México", "", "Sudáfrica", "", "", "", "PENDIENTE", "", "", "4"],
+    ["M5", "Fase de Grupos", "A", new Date(2026, 5, 23), "15:00", "Corea del Sur", "", "Sudáfrica", "", "", "", "PENDIENTE", "", "", "5"],
+    ["M6", "Fase de Grupos", "A", new Date(2026, 5, 23), "20:00", "República Checa", "", "México", "", "", "", "PENDIENTE", "", "", "6"],
+    ["M7", "Fase de Grupos", "B", new Date(2026, 5, 12), "15:00", "Canadá", "", "Bosnia y Herzegovina", "", "", "", "PENDIENTE", "", "", "7"],
+    ["M8", "Fase de Grupos", "B", new Date(2026, 5, 13), "12:00", "Qatar", "", "Suiza", "", "", "", "PENDIENTE", "", "", "8"],
+    ["M13", "Fase de Grupos", "C", new Date(2026, 5, 13), "18:00", "Brasil", "", "Marruecos", "", "", "", "PENDIENTE", "", "", "13"],
+    ["M19", "Fase de Grupos", "D", new Date(2026, 5, 14), "16:00", "Estados Unidos", "", "Paraguay", "", "", "", "PENDIENTE", "", "", "19"],
+    ["M73", "Ronda de 32", "", new Date(2026, 5, 28), "12:00", "2do Grupo A", "", "2do Grupo B", "", "", "", "PENDIENTE", "", "", "73"],
+    ["M75", "Ronda de 32", "", new Date(2026, 5, 29), "16:30", "1ro Grupo E", "", "3ro Grupos A/B/C/D/F", "", "", "", "PENDIENTE", "", "", "75"],
+    ["M89", "Octavos de Final", "", new Date(2026, 6, 4), "13:00", "Ganador M73", "", "Ganador M75", "", "", "", "PENDIENTE", "", "", "89"],
+    ["M97", "Cuartos de Final", "", new Date(2026, 6, 9), "16:00", "Ganador M89", "", "Ganador M90", "", "", "", "PENDIENTE", "", "", "97"],
+    ["M101", "Semifinal", "", new Date(2026, 6, 14), "20:00", "Ganador M97", "", "Ganador M98", "", "", "", "PENDIENTE", "", "", "101"],
+    ["M104", "Final", "", new Date(2026, 6, 19), "15:00", "Ganador M101", "", "Ganador M102", "", "", "", "PENDIENTE", "", "", "104"]
+  ];
   hoja.getRange(2, 1, p.length, 15).setValues(p);
+}
+
+function actualizarResultadosAPI() {
+  var config = getConfig();
+  if (!config.API_FOOTBALL_KEY) return { success: false, error: "Falta API Key" };
+  // Lógica de fetch aquí...
+  return { success: true, message: "Funcionalidad preparada para implementación de API" };
 }
 
 function insertarDatosPrueba() { seedBanderas(); seedPartidos(); registrarParticipante("admin@demo.com", "Admin", "Admin"); return { success: true, message: "OK" }; }
@@ -525,11 +532,11 @@ function abrirWebApp() {
   SpreadsheetApp.getUi().showModalDialog(html, 'Abriendo...');
 }
 
+
 function testLecturaSheet() {
   var ui = SpreadsheetApp.getUi();
   try {
     var part = obtenerPartidosParaUsuario(Session.getEffectiveUser().getEmail());
-    var flags = [obtenerUrlBanderaDesdeSheet("México"), obtenerUrlBanderaDesdeSheet("Brasil"), obtenerUrlBanderaDesdeSheet("Argentina")];
 
     var msg = "Prueba de Lectura:\n";
     msg += "- Partidos leídos: " + (part.partidos ? part.partidos.length : 0) + "\n";
@@ -537,9 +544,6 @@ function testLecturaSheet() {
       msg += "- Equipo 1: " + part.partidos[0].equipoLocal + " vs " + part.partidos[0].equipoVisita + "\n";
       msg += "- Estado M1: " + part.partidos[0].estadoPronostico + "\n";
     }
-    msg += "- Flag México: " + flags[0] + "\n";
-    msg += "- Flag Brasil: " + flags[1] + "\n";
-    msg += "- Flag Argentina: " + flags[2];
 
     ui.alert(msg);
   } catch(e) {
