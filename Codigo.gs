@@ -13,6 +13,21 @@ const CONFIG = {
   TORNEO_NOMBRE: 'Quiniela Mundial 2026'
 };
 
+const BANDERAS = {
+  "México": "🇲🇽", "Sudáfrica": "🇿🇦", "Corea del Sur": "🇰🇷", "República Checa": "🇨🇿",
+  "Canadá": "🇨🇦", "Bosnia y Herzegovina": "🇧🇦", "Qatar": "🇶🇦", "Suiza": "🇨🇭",
+  "Brasil": "🇧🇷", "Marruecos": "🇲🇦", "Haití": "🇭🇹", "Escocia": "🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+  "Estados Unidos": "🇺🇸", "Paraguay": "🇵🇾", "Australia": "🇦🇺", "Turquía": "🇹🇷",
+  "Alemania": "🇩🇪", "Curazao": "🇨🇼", "Costa de Marfil": "🇨🇮", "Ecuador": "🇪🇨",
+  "Países Bajos": "🇳🇱", "Japón": "🇯🇵", "Suecia": "🇸🇪", "Túnez": "🇹🇳",
+  "Bélgica": "🇧🇪", "Egipto": "🇪🇬", "Irán": "🇮🇷", "Nueva Zelanda": "🇳🇿",
+  "España": "🇪🇸", "Cabo Verde": "🇨🇻", "Arabia Saudita": "🇸🇦", "Uruguay": "🇺🇾",
+  "Francia": "🇫🇷", "Senegal": "🇸🇳", "Irak": "🇮🇶", "Noruega": "🇳🇴",
+  "Argentina": "🇦🇷", "Argelia": "🇩🇿", "Austria": "🇦🇹", "Jordania": "🇯🇴",
+  "Portugal": "🇵🇹", "RD Congo": "🇨🇩", "Uzbekistán": "🇺🇿", "Colombia": "🇨🇴",
+  "Inglaterra": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "Croacia": "🇭🇷", "Ghana": "🇬🇭", "Panamá": "🇵🇦"
+};
+
 const CALENDARIO_HARDCODED = [
   {ID_Partido: 'M1', Fase: 'Grupos', Grupo: 'A', Fecha: '2026-06-11', Hora_UTC: '20:00:00-06:00', Equipo_Local: 'México', Bandera_Local: '🇲🇽', Equipo_Visita: 'Corea del Sur', Bandera_Visita: '🇰🇷', Match_Num: 1},
   {ID_Partido: 'M2', Fase: 'Grupos', Grupo: 'A', Fecha: '2026-06-12', Hora_UTC: '15:00:00-04:00', Equipo_Local: 'Sudáfrica', Bandera_Local: '🇿🇦', Equipo_Visita: 'República Checa', Bandera_Visita: '🇨🇿', Match_Num: 2},
@@ -307,20 +322,37 @@ function registrarParticipante(email, nombre, alias) {
     const sheet = ss.getSheetByName('Participantes');
     const data = sheet.getDataRange().getValues();
 
-    // Validar duplicados
-    const participante = data.find(row => row[0] === email);
-    if (participante) {
-      return { success: true, message: '¡Bienvenido de nuevo, ' + participante[2] + '!', isExisting: true };
+    // Validar email único
+    if (data.some(row => row[0].toLowerCase() === email.toLowerCase())) {
+      return { success: false, error: 'Email ya registrado. Usa la opción de ingreso.' };
     }
 
-    const aliasExiste = data.some(row => row[2] === alias);
-    if (aliasExiste) return { success: false, message: 'El alias ya está en uso.' };
+    // Validar alias único
+    if (data.some(row => row[2].toLowerCase() === alias.toLowerCase())) {
+      return { success: false, error: 'Este alias ya está en uso. Elige otro.' };
+    }
 
     sheet.appendRow([email, nombre, alias, 0, 0, 0, 0, new Date()]);
-    return { success: true, message: 'Registro exitoso.', isExisting: false };
+    return { success: true, message: '¡Cuenta creada exitosamente!' };
   } catch (e) {
     logError('registrarParticipante', e.message, email);
-    return { success: false, message: 'Error en el servidor.' };
+    return { success: false, error: 'Error en el servidor al registrar.' };
+  }
+}
+
+function loginParticipante(email) {
+  try {
+    const data = getSheetData('Participantes');
+    const p = data.find(row => row.Email.toLowerCase() === email.toLowerCase());
+
+    if (p) {
+      return { success: true, participante: p };
+    } else {
+      return { success: false, error: 'Email no registrado. ¿Deseas crear una cuenta?' };
+    }
+  } catch (e) {
+    logError('loginParticipante', e.message, email);
+    return { success: false, error: 'Error al intentar ingresar.' };
   }
 }
 
