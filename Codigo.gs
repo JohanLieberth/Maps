@@ -1,6 +1,7 @@
 /**
  * SISTEMA DE QUINIELA MUNDIAL 2026
- * Backend Optimizado y Resiliente.
+ * Backend Completo y Robusto: Google Sheets como Fuente de Verdad.
+ * Normalización de cabeceras para máxima compatibilidad.
  */
 
 const CONFIG_BASE = {
@@ -10,8 +11,7 @@ const CONFIG_BASE = {
   PUNTOS_BONUS_ELIMINATORIA: 3,
   HORAS_CIERRE_PRONOSTICO: 24,
   ZONA_HORARIA: 'America/Mexico_City',
-  TORNEO_NOMBRE: 'Quiniela Mundial 2026',
-  ADMIN_EMAIL: ''
+  TORNEO_NOMBRE: 'Quiniela Mundial 2026'
 };
 
 // --- RUTA DE ENTRADA WEB APP ---
@@ -65,7 +65,10 @@ function getConfig() {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName('Configuracion');
-    if (!sheet) return CONFIG_BASE;
+    if (!sheet || sheet.getLastRow() < 2) {
+      inicializarSistema();
+      return CONFIG_BASE;
+    }
     var data = sheet.getDataRange().getValues();
     var config = {};
     for (var i = 1; i < data.length; i++) {
@@ -83,16 +86,28 @@ function obtenerPartidosParaUsuario(email) {
     var hPartidos = ss.getSheetByName("Partidos");
     if (!hPartidos || hPartidos.getLastRow() < 2) { seedPartidos(); hPartidos = ss.getSheetByName("Partidos"); }
 
-    // Carga masiva de datos para evitar llamadas repetidas
     var dP = hPartidos.getDataRange().getValues();
     var headers = dP.shift();
-    var idx = {}; headers.forEach(function(h, c) { idx[String(h).trim()] = c; });
+    var idx = {};
+    // Normalizar cabeceras: Quitar espacios y convertir a underscore para evitar errores de lectura
+    headers.forEach(function(h, c) {
+      var key = String(h).trim().replace(/\s+/g, '_');
+      idx[key] = c;
+    });
+
+    // Mapeo seguro de columnas críticas
+    var colID = idx["ID_Partido"], colFase = idx["Fase"], colGrupo = idx["Grupo"], colFecha = idx["Fecha"];
+    var colHora = idx["Hora_UTC"], colLocal = idx["Equipo_Local"], colVisita = idx["Equipo_Visita"];
+    var colGolLR = idx["Gol_Local_Real"], colGolVR = idx["Gol_Visita_Real"], colEstado = idx["Estado"];
+    var colMatchN = idx["Match_Num"];
 
     var hBanderas = ss.getSheetByName("Banderas");
     var banderasMap = {};
     if (hBanderas && hBanderas.getLastRow() > 1) {
       var dB = hBanderas.getDataRange().getValues();
-      for (var b = 1; b < dB.length; b++) { banderasMap[String(dB[b][0]).trim().toLowerCase()] = dB[b][2]; }
+      for (var b = 1; b < dB.length; b++) {
+        if(dB[b][0]) banderasMap[String(dB[b][0]).trim().toLowerCase()] = dB[b][2];
+      }
     }
 
     var hPronos = ss.getSheetByName("Pronosticos");
@@ -111,13 +126,13 @@ function obtenerPartidosParaUsuario(email) {
     var ms24h = 24 * 60 * 60 * 1000;
 
     var partidos = dP.map(function(row) {
-      var id = String(row[idx["ID_Partido"]]);
-      if (!id) return null;
+      var id = String(row[colID]);
+      if (!id || id === "undefined") return null;
 
-      var eqL = row[idx["Equipo_Local"]] || "";
-      var eqV = row[idx["Equipo_Visita"]] || "";
-      var fRaw = row[idx["Fecha"]];
-      var hRaw = row[idx["Hora_UTC"]];
+      var eqL = String(row[colLocal] || "").trim();
+      var eqV = String(row[colVisita] || "").trim();
+      var fRaw = row[colFecha];
+      var hRaw = row[colHora];
 
       var fDt = (fRaw instanceof Date) ? new Date(fRaw.getTime()) : (fRaw ? new Date(String(fRaw)) : null);
       if (fDt && hRaw) {
@@ -126,7 +141,7 @@ function obtenerPartidosParaUsuario(email) {
       }
 
       var fCierre = (fDt && !isNaN(fDt.getTime())) ? new Date(fDt.getTime() - ms24h) : null;
-      var estS = String(row[idx["Estado"]] || "PENDIENTE").toUpperCase().trim();
+      var estS = String(row[colEstado] || "PENDIENTE").toUpperCase().trim();
       var estP = "ABIERTO", inpH = true;
 
       if (estS === "JUGADO") { estP = "JUGADO"; inpH = false; }
@@ -137,17 +152,25 @@ function obtenerPartidosParaUsuario(email) {
       }
 
       return {
-        idPartido: id, fase: String(row[idx["Fase"]] || ""), grupo: String(row[idx["Grupo"]] || ""),
+        idPartido: id,
+        fase: String(row[colFase] || ""),
+        grupo: String(row[colGrupo] || ""),
         fecha: fDt ? fDt.toISOString().split('T')[0] : String(fRaw),
-        hora: String(hRaw || ""), equipoLocal: eqL,
+        hora: String(hRaw || ""),
+        equipoLocal: eqL,
+        nombreLocal: eqL,
         urlBanderaLocal: banderasMap[eqL.toLowerCase()] || "https://flagcdn.com/w80/un.png",
         equipoVisita: eqV,
+        nombreVisita: eqV,
         urlBanderaVisita: banderasMap[eqV.toLowerCase()] || "https://flagcdn.com/w80/un.png",
-        golLocalReal: row[idx["Gol_Local_Real"]] !== "" ? Number(row[idx["Gol_Local_Real"]]) : null,
-        golVisitaReal: row[idx["Gol_Visita_Real"]] !== "" ? Number(row[idx["Gol_Visita_Real"]]) : null,
-        estadoPartido: estS, estadoPronostico: estP, inputsHabilitados: inpH,
+        golLocalReal: row[colGolLR] !== "" ? Number(row[colGolLR]) : null,
+        golVisitaReal: row[colGolVR] !== "" ? Number(row[colGolVR]) : null,
+        estadoPartido: estS,
+        estadoPronostico: estP,
+        inputsHabilitados: inpH,
         fechaCierre: fCierre ? fCierre.toISOString() : null,
-        miPronostico: pronosUsr[id] || null, matchNum: String(row[idx["Match_Num"]] || "")
+        miPronostico: pronosUsr[id] || null,
+        matchNum: String(row[colMatchN] || "")
       };
     }).filter(function(p) { return p !== null; });
 
@@ -171,7 +194,8 @@ function recalcularTodosLosPuntos() {
     var hPartidos = ss.getSheetByName('Partidos');
     var dP = hPartidos.getDataRange().getValues();
     var hP = dP.shift();
-    var idxP = {}; hP.forEach(function(h, c) { idxP[String(h).trim()] = c; });
+    var idxP = {};
+    hP.forEach(function(h, c) { idxP[String(h).trim().replace(/\s+/g, '_')] = c; });
 
     var hPronos = ss.getSheetByName('Pronosticos');
     if (!hPronos || hPronos.getLastRow() < 2) return { success: true };
@@ -223,8 +247,8 @@ function actualizarFaseEliminatoria() {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var hPartidos = ss.getSheetByName('Partidos');
     var dP = hPartidos.getDataRange().getValues();
-    var headers = dP.shift();
-    var idx = {}; headers.forEach(function(h, c) { idx[String(h).trim()] = c; });
+    var hHead = dP.shift();
+    var idx = {}; hHead.forEach(function(h, c) { idx[String(h).trim().replace(/\s+/g, '_')] = c; });
 
     var grupos = ['A','B','C','D','E','F','G','H','I','J','K','L'];
     var clasificados = {}; var terceros = [];
@@ -310,7 +334,7 @@ function loginParticipante(email) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Participantes");
-    if(!sheet) return { success: false, error: "No hay participantes" };
+    if(!sheet) return { success: false, error: "Base de datos vacía" };
     var d = sheet.getDataRange().getValues();
     var mB = String(email || "").toLowerCase();
     var u = d.find(function(r) { return String(r[0]).toLowerCase() === mB; });
@@ -321,9 +345,9 @@ function loginParticipante(email) {
 function obtenerParticipante(email) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var h = ss.getSheetByName("Participantes");
-    if(!h) return null;
-    var d = h.getDataRange().getValues();
+    var sheet = ss.getSheetByName("Participantes");
+    if(!sheet) return null;
+    var d = sheet.getDataRange().getValues();
     var mB = String(email || "").toLowerCase();
     var u = d.find(function(r) { return String(r[0]).toLowerCase() === mB; });
     return u ? { Email: u[0], Nombre: u[1], Alias: u[2], Puntos_Totales: u[3], Aciertos_Exactos: u[4] } : null;
@@ -333,9 +357,9 @@ function obtenerParticipante(email) {
 function obtenerRanking() {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var h = ss.getSheetByName("Participantes");
-    if(!h || h.getLastRow() < 2) return [];
-    var d = h.getDataRange().getValues(); d.shift();
+    var sheet = ss.getSheetByName("Participantes");
+    if(!sheet || sheet.getLastRow() < 2) return [];
+    var d = sheet.getDataRange().getValues(); d.shift();
     return d.map(function(r) { return { Alias: r[2], Nombre: r[1], Puntos_Totales: r[3], Aciertos_Exactos: r[4] }; }).sort(function(a,b) { return b.Puntos_Totales - a.Puntos_Totales; });
   } catch(e) { return []; }
 }
@@ -348,8 +372,8 @@ function guardarPronosticos(email, pronosArr) {
     if (!hPronos) { ss.insertSheet("Pronosticos").appendRow(['ID_Pronostico', 'Email_Participante', 'ID_Partido', 'Gol_Local', 'Gol_Visita', 'Fecha_Registro', 'Puntos_Obtenidos', 'Calculado']); hPronos = ss.getSheetByName("Pronosticos"); }
 
     var pD = hPart.getDataRange().getValues();
-    var hP = pD.shift();
-    var idxP = {}; hP.forEach(function(h, c) { idxP[String(h).trim()] = c; });
+    var hHead = pD.shift();
+    var idxP = {}; hHead.forEach(function(h, c) { idxP[String(h).trim().replace(/\s+/g, '_')] = c; });
 
     var ahora = new Date();
     var userPronos = hPronos.getDataRange().getValues();
@@ -382,7 +406,7 @@ function actualizarResultadoManual(id, gl, gv) {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var hoja = ss.getSheetByName('Partidos');
     var d = hoja.getDataRange().getValues();
-    var idx = {}; d[0].forEach(function(h, c) { idx[String(h).trim()] = c; });
+    var idx = {}; d[0].forEach(function(h, c) { idx[String(h).trim().replace(/\s+/g, '_')] = c; });
     var r = d.findIndex(function(row) { return String(row[0]) == String(id); });
     if (r > -1) {
       hoja.getRange(r + 1, idx["Gol_Local_Real"] + 1, 1, 3).setValues([[gl, gv, "JUGADO"]]);
