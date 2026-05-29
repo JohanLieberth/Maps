@@ -207,7 +207,6 @@ function getSheetData(sheetName) {
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     let sheet = ss.getSheetByName(sheetName);
 
-    // Auto-inicialización si la hoja no existe
     if (!sheet) {
       inicializarSistema();
       sheet = ss.getSheetByName(sheetName);
@@ -215,13 +214,20 @@ function getSheetData(sheetName) {
     }
 
     const data = sheet.getDataRange().getValues();
-    if (data.length <= 1) return []; // Solo encabezados o vacía
+    if (data.length <= 1) return [];
 
     const headers = data.shift();
     return data.map(row => {
       const obj = {};
       headers.forEach((header, i) => {
-        if (header) obj[header] = row[i];
+        if (header) {
+          let val = row[i];
+          // Convertir fechas a string ISO para evitar errores de serialización GAS
+          if (val instanceof Date) {
+            val = val.toISOString();
+          }
+          obj[header] = val;
+        }
       });
       return obj;
     });
@@ -750,34 +756,20 @@ function logError(funcion, error, detalle) {
 
 function obtenerPartidos() {
   try {
+    // Leemos directamente del Sheet como se solicitó
     let data = getSheetData('Partidos');
 
+    // Si la hoja está vacía (solo cabecera), forzamos el seed una vez
     if (data.length === 0) {
-      // Fallback inmediato a datos hardcoded si la hoja está vacía
-      // Esto asegura que el usuario SIEMPRE vea partidos.
-      return CALENDARIO_HARDCODED.map(m => {
-        // Enriquecemos con campos vacíos de resultados para que el frontend no falle
-        return {
-          ...m,
-          Gol_Local_Real: '',
-          Gol_Visita_Real: '',
-          Estado: 'Abierto',
-          Fecha_Cierre: calcularFechaCierreLocal(m.Fecha, m.Hora_UTC)
-        };
-      });
+      console.log("Hoja vacía detectada, ejecutando seed...");
+      seedPartidos();
+      data = getSheetData('Partidos');
     }
 
     return data;
   } catch (e) {
     logError('obtenerPartidos', e.message, '');
-    // Fallback en caso de error de lectura de la hoja
-    return CALENDARIO_HARDCODED.map(m => ({
-      ...m,
-      Gol_Local_Real: '',
-      Gol_Visita_Real: '',
-      Estado: 'Abierto',
-      Fecha_Cierre: calcularFechaCierreLocal(m.Fecha, m.Hora_UTC)
-    }));
+    return [];
   }
 }
 

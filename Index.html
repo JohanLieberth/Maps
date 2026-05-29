@@ -458,11 +458,12 @@
 
     function cargarPartidos() {
       showSpinner();
+      console.log("Solicitando partidos al servidor...");
       google.script.run
         .withSuccessHandler(partidos => {
+          console.log("Partidos recibidos:", partidos ? partidos.length : 0);
           if (!partidos || partidos.length === 0) {
-             // Ya no alertamos inmediatamente si el backend tiene un fallback hardcoded
-             console.warn("Partidos cargados mediante fallback o vacíos.");
+             console.error("No se recibieron partidos del Sheet.");
           }
           partidosGlobal = partidos || [];
           google.script.run
