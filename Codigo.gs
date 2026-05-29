@@ -13,6 +13,113 @@ const CONFIG = {
   TORNEO_NOMBRE: 'Quiniela Mundial 2026'
 };
 
+const CALENDARIO_HARDCODED = [
+  {ID_Partido: 'M1', Fase: 'Grupos', Grupo: 'A', Fecha: '2026-06-11', Hora_UTC: '20:00:00-06:00', Equipo_Local: 'México', Bandera_Local: '🇲🇽', Equipo_Visita: 'Corea del Sur', Bandera_Visita: '🇰🇷', Match_Num: 1},
+  {ID_Partido: 'M2', Fase: 'Grupos', Grupo: 'A', Fecha: '2026-06-12', Hora_UTC: '15:00:00-04:00', Equipo_Local: 'Sudáfrica', Bandera_Local: '🇿🇦', Equipo_Visita: 'República Checa', Bandera_Visita: '🇨🇿', Match_Num: 2},
+  {ID_Partido: 'M3', Fase: 'Grupos', Grupo: 'A', Fecha: '2026-06-17', Hora_UTC: '15:00:00-04:00', Equipo_Local: 'República Checa', Bandera_Local: '🇨🇿', Equipo_Visita: 'Corea del Sur', Bandera_Visita: '🇰🇷', Match_Num: 3},
+  {ID_Partido: 'M4', Fase: 'Grupos', Grupo: 'A', Fecha: '2026-06-17', Hora_UTC: '20:00:00-06:00', Equipo_Local: 'México', Bandera_Local: '🇲🇽', Equipo_Visita: 'Sudáfrica', Bandera_Visita: '🇿🇦', Match_Num: 4},
+  {ID_Partido: 'M5', Fase: 'Grupos', Grupo: 'A', Fecha: '2026-06-23', Hora_UTC: '15:00:00-04:00', Equipo_Local: 'Corea del Sur', Bandera_Local: '🇰🇷', Equipo_Visita: 'Sudáfrica', Bandera_Visita: '🇿🇦', Match_Num: 5},
+  {ID_Partido: 'M6', Fase: 'Grupos', Grupo: 'A', Fecha: '2026-06-23', Hora_UTC: '20:00:00-06:00', Equipo_Local: 'República Checa', Bandera_Local: '🇨🇿', Equipo_Visita: 'México', Bandera_Visita: '🇲🇽', Match_Num: 6},
+  {ID_Partido: 'M7', Fase: 'Grupos', Grupo: 'B', Fecha: '2026-06-12', Hora_UTC: '15:00:00-04:00', Equipo_Local: 'Canadá', Bandera_Local: '🇨🇦', Equipo_Visita: 'Bosnia y Herzegovina', Bandera_Visita: '🇧🇦', Match_Num: 7},
+  {ID_Partido: 'M8', Fase: 'Grupos', Grupo: 'B', Fecha: '2026-06-13', Hora_UTC: '12:00:00-07:00', Equipo_Local: 'Qatar', Bandera_Local: '🇶🇦', Equipo_Visita: 'Suiza', Bandera_Visita: '🇨🇭', Match_Num: 8},
+  {ID_Partido: 'M9', Fase: 'Grupos', Grupo: 'B', Fecha: '2026-06-18', Hora_UTC: '12:00:00-07:00', Equipo_Local: 'Suiza', Bandera_Local: '🇨🇭', Equipo_Visita: 'Bosnia y Herzegovina', Bandera_Visita: '🇧🇦', Match_Num: 9},
+  {ID_Partido: 'M10', Fase: 'Grupos', Grupo: 'B', Fecha: '2026-06-18', Hora_UTC: '15:00:00-07:00', Equipo_Local: 'Canadá', Bandera_Local: '🇨🇦', Equipo_Visita: 'Qatar', Bandera_Visita: '🇶🇦', Match_Num: 10},
+  {ID_Partido: 'M11', Fase: 'Grupos', Grupo: 'B', Fecha: '2026-06-24', Hora_UTC: '12:00:00-07:00', Equipo_Local: 'Bosnia y Herzegovina', Bandera_Local: '🇧🇦', Equipo_Visita: 'Qatar', Bandera_Visita: '🇶🇦', Match_Num: 11},
+  {ID_Partido: 'M12', Fase: 'Grupos', Grupo: 'B', Fecha: '2026-06-24', Hora_UTC: '12:00:00-07:00', Equipo_Local: 'Suiza', Bandera_Local: '🇨🇭', Equipo_Visita: 'Canadá', Bandera_Visita: '🇨🇦', Match_Num: 12},
+  {ID_Partido: 'M13', Fase: 'Grupos', Grupo: 'C', Fecha: '2026-06-13', Hora_UTC: '18:00:00-04:00', Equipo_Local: 'Brasil', Bandera_Local: '🇧🇷', Equipo_Visita: 'Marruecos', Bandera_Visita: '🇲🇦', Match_Num: 13},
+  {ID_Partido: 'M14', Fase: 'Grupos', Grupo: 'C', Fecha: '2026-06-13', Hora_UTC: '21:00:00-04:00', Equipo_Local: 'Haití', Bandera_Local: '🇭🇹', Equipo_Visita: 'Escocia', Bandera_Visita: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', Match_Num: 14},
+  {ID_Partido: 'M15', Fase: 'Grupos', Grupo: 'C', Fecha: '2026-06-19', Hora_UTC: '18:00:00-04:00', Equipo_Local: 'Escocia', Bandera_Local: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', Equipo_Visita: 'Marruecos', Bandera_Visita: '🇲🇦', Match_Num: 15},
+  {ID_Partido: 'M16', Fase: 'Grupos', Grupo: 'C', Fecha: '2026-06-19', Hora_UTC: '20:30:00-04:00', Equipo_Local: 'Brasil', Bandera_Local: '🇧🇷', Equipo_Visita: 'Haití', Bandera_Visita: '🇭🇹', Match_Num: 16},
+  {ID_Partido: 'M17', Fase: 'Grupos', Grupo: 'C', Fecha: '2026-06-24', Hora_UTC: '18:00:00-04:00', Equipo_Local: 'Escocia', Bandera_Local: '🏴󠁧󠁢󠁳󠁣󠁴󠁿', Equipo_Visita: 'Brasil', Bandera_Visita: '🇧🇷', Match_Num: 17},
+  {ID_Partido: 'M18', Fase: 'Grupos', Grupo: 'C', Fecha: '2026-06-24', Hora_UTC: '18:00:00-04:00', Equipo_Local: 'Marruecos', Bandera_Local: '🇲🇦', Equipo_Visita: 'Haití', Bandera_Visita: '🇭🇹', Match_Num: 18},
+  {ID_Partido: 'M19', Fase: 'Grupos', Grupo: 'D', Fecha: '2026-06-14', Hora_UTC: '16:00:00-07:00', Equipo_Local: 'Estados Unidos', Bandera_Local: '🇺🇸', Equipo_Visita: 'Paraguay', Bandera_Visita: '🇵🇾', Match_Num: 19},
+  {ID_Partido: 'M20', Fase: 'Grupos', Grupo: 'D', Fecha: '2026-06-14', Hora_UTC: '19:00:00-07:00', Equipo_Local: 'Australia', Bandera_Local: '🇦🇺', Equipo_Visita: 'Turquía', Bandera_Visita: '🇹🇷', Match_Num: 20},
+  {ID_Partido: 'M21', Fase: 'Grupos', Grupo: 'D', Fecha: '2026-06-20', Hora_UTC: '16:00:00-07:00', Equipo_Local: 'Turquía', Bandera_Local: '🇹🇷', Equipo_Visita: 'Paraguay', Bandera_Visita: '🇵🇾', Match_Num: 21},
+  {ID_Partido: 'M22', Fase: 'Grupos', Grupo: 'D', Fecha: '2026-06-20', Hora_UTC: '19:00:00-07:00', Equipo_Local: 'Estados Unidos', Bandera_Local: '🇺🇸', Equipo_Visita: 'Australia', Bandera_Visita: '🇦🇺', Match_Num: 22},
+  {ID_Partido: 'M23', Fase: 'Grupos', Grupo: 'D', Fecha: '2026-06-25', Hora_UTC: '19:00:00-07:00', Equipo_Local: 'Paraguay', Bandera_Local: '🇵🇾', Equipo_Visita: 'Australia', Bandera_Visita: '🇦🇺', Match_Num: 23},
+  {ID_Partido: 'M24', Fase: 'Grupos', Grupo: 'D', Fecha: '2026-06-25', Hora_UTC: '22:00:00-07:00', Equipo_Local: 'Turquía', Bandera_Local: '🇹🇷', Equipo_Visita: 'Estados Unidos', Bandera_Visita: '🇺🇸', Match_Num: 24},
+  {ID_Partido: 'M25', Fase: 'Grupos', Grupo: 'E', Fecha: '2026-06-14', Hora_UTC: '16:00:00-04:00', Equipo_Local: 'Alemania', Bandera_Local: '🇩🇪', Equipo_Visita: 'Curazao', Bandera_Visita: '🇨🇼', Match_Num: 25},
+  {ID_Partido: 'M26', Fase: 'Grupos', Grupo: 'E', Fecha: '2026-06-14', Hora_UTC: '19:00:00-04:00', Equipo_Local: 'Costa de Marfil', Bandera_Local: '🇨🇮', Equipo_Visita: 'Ecuador', Bandera_Visita: '🇪🇨', Match_Num: 26},
+  {ID_Partido: 'M27', Fase: 'Grupos', Grupo: 'E', Fecha: '2026-06-20', Hora_UTC: '16:00:00-04:00', Equipo_Local: 'Ecuador', Bandera_Local: '🇪🇨', Equipo_Visita: 'Curazao', Bandera_Visita: '🇨🇼', Match_Num: 27},
+  {ID_Partido: 'M28', Fase: 'Grupos', Grupo: 'E', Fecha: '2026-06-20', Hora_UTC: '19:00:00-04:00', Equipo_Local: 'Alemania', Bandera_Local: '🇩🇪', Equipo_Visita: 'Costa de Marfil', Bandera_Visita: '🇨🇮', Match_Num: 28},
+  {ID_Partido: 'M29', Fase: 'Grupos', Grupo: 'E', Fecha: '2026-06-25', Hora_UTC: '16:00:00-04:00', Equipo_Local: 'Curazao', Bandera_Local: '🇨🇼', Equipo_Visita: 'Costa de Marfil', Bandera_Visita: '🇨🇮', Match_Num: 29},
+  {ID_Partido: 'M30', Fase: 'Grupos', Grupo: 'E', Fecha: '2026-06-25', Hora_UTC: '16:00:00-04:00', Equipo_Local: 'Ecuador', Bandera_Local: '🇪🇨', Equipo_Visita: 'Alemania', Bandera_Visita: '🇩🇪', Match_Num: 30},
+  {ID_Partido: 'M31', Fase: 'Grupos', Grupo: 'F', Fecha: '2026-06-14', Hora_UTC: '15:00:00-05:00', Equipo_Local: 'Países Bajos', Bandera_Local: '🇳🇱', Equipo_Visita: 'Japón', Bandera_Visita: '🇯🇵', Match_Num: 31},
+  {ID_Partido: 'M32', Fase: 'Grupos', Grupo: 'F', Fecha: '2026-06-14', Hora_UTC: '20:00:00-06:00', Equipo_Local: 'Suecia', Bandera_Local: '🇸🇪', Equipo_Visita: 'Túnez', Bandera_Visita: '🇹🇳', Match_Num: 32},
+  {ID_Partido: 'M33', Fase: 'Grupos', Grupo: 'F', Fecha: '2026-06-20', Hora_UTC: '12:00:00-05:00', Equipo_Local: 'Países Bajos', Bandera_Local: '🇳🇱', Equipo_Visita: 'Suecia', Bandera_Visita: '🇸🇪', Match_Num: 33},
+  {ID_Partido: 'M34', Fase: 'Grupos', Grupo: 'F', Fecha: '2026-06-20', Hora_UTC: '22:00:00-06:00', Equipo_Local: 'Túnez', Bandera_Local: '🇹🇳', Equipo_Visita: 'Japón', Bandera_Visita: '🇯🇵', Match_Num: 34},
+  {ID_Partido: 'M35', Fase: 'Grupos', Grupo: 'F', Fecha: '2026-06-25', Hora_UTC: '18:00:00-05:00', Equipo_Local: 'Japón', Bandera_Local: '🇯🇵', Equipo_Visita: 'Suecia', Bandera_Visita: '🇸🇪', Match_Num: 35},
+  {ID_Partido: 'M36', Fase: 'Grupos', Grupo: 'F', Fecha: '2026-06-25', Hora_UTC: '18:00:00-05:00', Equipo_Local: 'Túnez', Bandera_Local: '🇹🇳', Equipo_Visita: 'Países Bajos', Bandera_Visita: '🇳🇱', Match_Num: 36},
+  {ID_Partido: 'M37', Fase: 'Grupos', Grupo: 'G', Fecha: '2026-06-15', Hora_UTC: '19:00:00-07:00', Equipo_Local: 'Bélgica', Bandera_Local: '🇧🇪', Equipo_Visita: 'Egipto', Bandera_Visita: '🇪🇬', Match_Num: 37},
+  {ID_Partido: 'M38', Fase: 'Grupos', Grupo: 'G', Fecha: '2026-06-15', Hora_UTC: '22:00:00-07:00', Equipo_Local: 'Irán', Bandera_Local: '🇮🇷', Equipo_Visita: 'Nueva Zelanda', Bandera_Visita: '🇳🇿', Match_Num: 38},
+  {ID_Partido: 'M39', Fase: 'Grupos', Grupo: 'G', Fecha: '2026-06-21', Hora_UTC: '16:00:00-07:00', Equipo_Local: 'Nueva Zelanda', Bandera_Local: '🇳🇿', Equipo_Visita: 'Egipto', Bandera_Visita: '🇪🇬', Match_Num: 39},
+  {ID_Partido: 'M40', Fase: 'Grupos', Grupo: 'G', Fecha: '2026-06-21', Hora_UTC: '19:00:00-07:00', Equipo_Local: 'Bélgica', Bandera_Local: '🇧🇪', Equipo_Visita: 'Irán', Bandera_Visita: '🇮🇷', Match_Num: 40},
+  {ID_Partido: 'M41', Fase: 'Grupos', Grupo: 'G', Fecha: '2026-06-26', Hora_UTC: '19:00:00-07:00', Equipo_Local: 'Egipto', Bandera_Local: '🇪🇬', Equipo_Visita: 'Irán', Bandera_Visita: '🇮🇷', Match_Num: 41},
+  {ID_Partido: 'M42', Fase: 'Grupos', Grupo: 'G', Fecha: '2026-06-26', Hora_UTC: '22:00:00-07:00', Equipo_Local: 'Nueva Zelanda', Bandera_Local: '🇳🇿', Equipo_Visita: 'Bélgica', Bandera_Visita: '🇧🇪', Match_Num: 42},
+  {ID_Partido: 'M43', Fase: 'Grupos', Grupo: 'H', Fecha: '2026-06-15', Hora_UTC: '14:00:00-06:00', Equipo_Local: 'España', Bandera_Local: '🇪🇸', Equipo_Visita: 'Cabo Verde', Bandera_Visita: '🇨🇻', Match_Num: 43},
+  {ID_Partido: 'M44', Fase: 'Grupos', Grupo: 'H', Fecha: '2026-06-15', Hora_UTC: '17:00:00-06:00', Equipo_Local: 'Arabia Saudita', Bandera_Local: '🇸🇦', Equipo_Visita: 'Uruguay', Bandera_Visita: '🇺🇾', Match_Num: 44},
+  {ID_Partido: 'M45', Fase: 'Grupos', Grupo: 'H', Fecha: '2026-06-21', Hora_UTC: '14:00:00-06:00', Equipo_Local: 'Uruguay', Bandera_Local: '🇺🇾', Equipo_Visita: 'Cabo Verde', Bandera_Visita: '🇨🇻', Match_Num: 45},
+  {ID_Partido: 'M46', Fase: 'Grupos', Grupo: 'H', Fecha: '2026-06-21', Hora_UTC: '17:00:00-06:00', Equipo_Local: 'España', Bandera_Local: '🇪🇸', Equipo_Visita: 'Arabia Saudita', Bandera_Visita: '🇸🇦', Match_Num: 46},
+  {ID_Partido: 'M47', Fase: 'Grupos', Grupo: 'H', Fecha: '2026-06-26', Hora_UTC: '20:00:00-06:00', Equipo_Local: 'Cabo Verde', Bandera_Local: '🇨🇻', Equipo_Visita: 'Arabia Saudita', Bandera_Visita: '🇸🇦', Match_Num: 47},
+  {ID_Partido: 'M48', Fase: 'Grupos', Grupo: 'H', Fecha: '2026-06-26', Hora_UTC: '20:00:00-06:00', Equipo_Local: 'Uruguay', Bandera_Local: '🇺🇾', Equipo_Visita: 'España', Bandera_Visita: '🇪🇸', Match_Num: 48},
+  {ID_Partido: 'M49', Fase: 'Grupos', Grupo: 'I', Fecha: '2026-06-16', Hora_UTC: '15:00:00-04:00', Equipo_Local: 'Francia', Bandera_Local: '🇫🇷', Equipo_Visita: 'Senegal', Bandera_Visita: '🇸🇳', Match_Num: 49},
+  {ID_Partido: 'M50', Fase: 'Grupos', Grupo: 'I', Fecha: '2026-06-16', Hora_UTC: '18:00:00-04:00', Equipo_Local: 'Irak', Bandera_Local: '🇮🇶', Equipo_Visita: 'Noruega', Bandera_Visita: '🇳🇴', Match_Num: 50},
+  {ID_Partido: 'M51', Fase: 'Grupos', Grupo: 'I', Fecha: '2026-06-22', Hora_UTC: '17:00:00-04:00', Equipo_Local: 'Francia', Bandera_Local: '🇫🇷', Equipo_Visita: 'Irak', Bandera_Visita: '🇮🇶', Match_Num: 51},
+  {ID_Partido: 'M52', Fase: 'Grupos', Grupo: 'I', Fecha: '2026-06-22', Hora_UTC: '20:00:00-04:00', Equipo_Local: 'Noruega', Bandera_Local: '🇳🇴', Equipo_Visita: 'Senegal', Bandera_Visita: '🇸🇳', Match_Num: 52},
+  {ID_Partido: 'M53', Fase: 'Grupos', Grupo: 'I', Fecha: '2026-06-26', Hora_UTC: '15:00:00-04:00', Equipo_Local: 'Senegal', Bandera_Local: '🇸🇳', Equipo_Visita: 'Irak', Bandera_Visita: '🇮🇶', Match_Num: 53},
+  {ID_Partido: 'M54', Fase: 'Grupos', Grupo: 'I', Fecha: '2026-06-26', Hora_UTC: '15:00:00-04:00', Equipo_Local: 'Noruega', Bandera_Local: '🇳🇴', Equipo_Visita: 'Francia', Bandera_Visita: '🇫🇷', Match_Num: 54},
+  {ID_Partido: 'M55', Fase: 'Grupos', Grupo: 'J', Fecha: '2026-06-16', Hora_UTC: '20:00:00-05:00', Equipo_Local: 'Argentina', Bandera_Local: '🇦🇷', Equipo_Visita: 'Argelia', Bandera_Visita: '🇩🇿', Match_Num: 55},
+  {ID_Partido: 'M56', Fase: 'Grupos', Grupo: 'J', Fecha: '2026-06-16', Hora_UTC: '21:00:00-07:00', Equipo_Local: 'Austria', Bandera_Local: '🇦🇹', Equipo_Visita: 'Jordania', Bandera_Visita: '🇯🇴', Match_Num: 56},
+  {ID_Partido: 'M57', Fase: 'Grupos', Grupo: 'J', Fecha: '2026-06-22', Hora_UTC: '12:00:00-05:00', Equipo_Local: 'Argentina', Bandera_Local: '🇦🇷', Equipo_Visita: 'Austria', Bandera_Visita: '🇦🇹', Match_Num: 57},
+  {ID_Partido: 'M58', Fase: 'Grupos', Grupo: 'J', Fecha: '2026-06-22', Hora_UTC: '20:00:00-07:00', Equipo_Local: 'Jordania', Bandera_Local: '🇯🇴', Equipo_Visita: 'Argelia', Bandera_Visita: '🇩🇿', Match_Num: 58},
+  {ID_Partido: 'M59', Fase: 'Grupos', Grupo: 'J', Fecha: '2026-06-27', Hora_UTC: '21:00:00-05:00', Equipo_Local: 'Argelia', Bandera_Local: '🇩🇿', Equipo_Visita: 'Austria', Bandera_Visita: '🇦🇹', Match_Num: 59},
+  {ID_Partido: 'M60', Fase: 'Grupos', Grupo: 'J', Fecha: '2026-06-27', Hora_UTC: '21:00:00-05:00', Equipo_Local: 'Jordania', Bandera_Local: '🇯🇴', Equipo_Visita: 'Argentina', Bandera_Visita: '🇦🇷', Match_Num: 60},
+  {ID_Partido: 'M61', Fase: 'Grupos', Grupo: 'K', Fecha: '2026-06-17', Hora_UTC: '12:00:00-05:00', Equipo_Local: 'Portugal', Bandera_Local: '🇵🇹', Equipo_Visita: 'RD Congo', Bandera_Visita: '🇨🇩', Match_Num: 61},
+  {ID_Partido: 'M62', Fase: 'Grupos', Grupo: 'K', Fecha: '2026-06-17', Hora_UTC: '20:00:00-06:00', Equipo_Local: 'Uzbekistán', Bandera_Local: '🇺🇿', Equipo_Visita: 'Colombia', Bandera_Visita: '🇨🇴', Match_Num: 62},
+  {ID_Partido: 'M63', Fase: 'Grupos', Grupo: 'K', Fecha: '2026-06-23', Hora_UTC: '12:00:00-05:00', Equipo_Local: 'Portugal', Bandera_Local: '🇵🇹', Equipo_Visita: 'Uzbekistán', Bandera_Visita: '🇺🇿', Match_Num: 63},
+  {ID_Partido: 'M64', Fase: 'Grupos', Grupo: 'K', Fecha: '2026-06-23', Hora_UTC: '20:00:00-06:00', Equipo_Local: 'Colombia', Bandera_Local: '🇨🇴', Equipo_Visita: 'RD Congo', Bandera_Visita: '🇨🇩', Match_Num: 64},
+  {ID_Partido: 'M65', Fase: 'Grupos', Grupo: 'K', Fecha: '2026-06-27', Hora_UTC: '19:30:00-04:00', Equipo_Local: 'Colombia', Bandera_Local: '🇨🇴', Equipo_Visita: 'Portugal', Bandera_Visita: '🇵🇹', Match_Num: 65},
+  {ID_Partido: 'M66', Fase: 'Grupos', Grupo: 'K', Fecha: '2026-06-27', Hora_UTC: '19:30:00-04:00', Equipo_Local: 'RD Congo', Bandera_Local: '🇨🇩', Equipo_Visita: 'Uzbekistán', Bandera_Visita: '🇺🇿', Match_Num: 66},
+  {ID_Partido: 'M67', Fase: 'Grupos', Grupo: 'L', Fecha: '2026-06-17', Hora_UTC: '14:00:00-04:00', Equipo_Local: 'Inglaterra', Bandera_Local: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', Equipo_Visita: 'Croacia', Bandera_Visita: '🇭🇷', Match_Num: 67},
+  {ID_Partido: 'M68', Fase: 'Grupos', Grupo: 'L', Fecha: '2026-06-17', Hora_UTC: '17:00:00-04:00', Equipo_Local: 'Ghana', Bandera_Local: '🇬🇭', Equipo_Visita: 'Panamá', Bandera_Visita: '🇵🇦', Match_Num: 68},
+  {ID_Partido: 'M69', Fase: 'Grupos', Grupo: 'L', Fecha: '2026-06-23', Hora_UTC: '14:00:00-04:00', Equipo_Local: 'Croacia', Bandera_Local: '🇭🇷', Equipo_Visita: 'Panamá', Bandera_Visita: '🇵🇦', Match_Num: 69},
+  {ID_Partido: 'M70', Fase: 'Grupos', Grupo: 'L', Fecha: '2026-06-23', Hora_UTC: '17:00:00-04:00', Equipo_Local: 'Inglaterra', Bandera_Local: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', Equipo_Visita: 'Ghana', Bandera_Visita: '🇬🇭', Match_Num: 70},
+  {ID_Partido: 'M71', Fase: 'Grupos', Grupo: 'L', Fecha: '2026-06-27', Hora_UTC: '17:00:00-04:00', Equipo_Local: 'Panamá', Bandera_Local: '🇵🇦', Equipo_Visita: 'Inglaterra', Bandera_Visita: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', Match_Num: 71},
+  {ID_Partido: 'M72', Fase: 'Grupos', Grupo: 'L', Fecha: '2026-06-27', Hora_UTC: '17:00:00-04:00', Equipo_Local: 'Ghana', Bandera_Local: '🇬🇭', Equipo_Visita: 'Croacia', Bandera_Visita: '🇭🇷', Match_Num: 72},
+  {ID_Partido: 'M73', Fase: 'Ronda de 32', Fecha: '2026-06-28', Hora_UTC: '12:00:00-07:00', Equipo_Local: '2do Grupo A', Bandera_Local: '', Equipo_Visita: '2do Grupo B', Bandera_Visita: '', Match_Num: 73},
+  {ID_Partido: 'M74', Fase: 'Ronda de 32', Fecha: '2026-06-29', Hora_UTC: '12:00:00-05:00', Equipo_Local: '1ro Grupo C', Bandera_Local: '', Equipo_Visita: '2do Grupo F', Bandera_Visita: '', Match_Num: 74},
+  {ID_Partido: 'M75', Fase: 'Ronda de 32', Fecha: '2026-06-29', Hora_UTC: '16:30:00-04:00', Equipo_Local: '1ro Grupo E', Bandera_Local: '', Equipo_Visita: '3ro Grupos A/B/C/D/F', Bandera_Visita: '', Match_Num: 75},
+  {ID_Partido: 'M76', Fase: 'Ronda de 32', Fecha: '2026-06-29', Hora_UTC: '19:00:00-06:00', Equipo_Local: '1ro Grupo F', Bandera_Local: '', Equipo_Visita: '2do Grupo C', Bandera_Visita: '', Match_Num: 76},
+  {ID_Partido: 'M77', Fase: 'Ronda de 32', Fecha: '2026-06-30', Hora_UTC: '12:00:00-05:00', Equipo_Local: '2do Grupo E', Bandera_Local: '', Equipo_Visita: '2do Grupo I', Bandera_Visita: '', Match_Num: 77},
+  {ID_Partido: 'M78', Fase: 'Ronda de 32', Fecha: '2026-06-30', Hora_UTC: '17:00:00-04:00', Equipo_Local: '1ro Grupo I', Bandera_Local: '', Equipo_Visita: '3ro Grupos C/D/F/G/H', Bandera_Visita: '', Match_Num: 78},
+  {ID_Partido: 'M79', Fase: 'Ronda de 32', Fecha: '2026-06-30', Hora_UTC: '19:00:00-06:00', Equipo_Local: '1ro Grupo A', Bandera_Local: '', Equipo_Visita: '3ro Grupos C/E/F/H/I', Bandera_Visita: '', Match_Num: 79},
+  {ID_Partido: 'M80', Fase: 'Ronda de 32', Fecha: '2026-07-01', Hora_UTC: '12:00:00-04:00', Equipo_Local: '1ro Grupo L', Bandera_Local: '', Equipo_Visita: '3ro Grupos E/H/I/J/K', Bandera_Visita: '', Match_Num: 80},
+  {ID_Partido: 'M81', Fase: 'Ronda de 32', Fecha: '2026-07-01', Hora_UTC: '13:00:00-07:00', Equipo_Local: '1ro Grupo G', Bandera_Local: '', Equipo_Visita: '3ro Grupos A/E/H/I/J', Bandera_Visita: '', Match_Num: 81},
+  {ID_Partido: 'M82', Fase: 'Ronda de 32', Fecha: '2026-07-01', Hora_UTC: '17:00:00-07:00', Equipo_Local: '1ro Grupo D', Bandera_Local: '', Equipo_Visita: '3ro Grupos B/E/F/I/J', Bandera_Visita: '', Match_Num: 82},
+  {ID_Partido: 'M83', Fase: 'Ronda de 32', Fecha: '2026-07-02', Hora_UTC: '12:00:00-07:00', Equipo_Local: '1ro Grupo H', Bandera_Local: '', Equipo_Visita: '2do Grupo J', Bandera_Visita: '', Match_Num: 83},
+  {ID_Partido: 'M84', Fase: 'Ronda de 32', Fecha: '2026-07-02', Hora_UTC: '19:00:00-04:00', Equipo_Local: '2do Grupo K', Bandera_Local: '', Equipo_Visita: '2do Grupo L', Bandera_Visita: '', Match_Num: 84},
+  {ID_Partido: 'M85', Fase: 'Ronda de 32', Fecha: '2026-07-02', Hora_UTC: '20:00:00-07:00', Equipo_Local: '1ro Grupo B', Bandera_Local: '', Equipo_Visita: '3ro Grupos E/F/G/I/J', Bandera_Visita: '', Match_Num: 85},
+  {ID_Partido: 'M86', Fase: 'Ronda de 32', Fecha: '2026-07-03', Hora_UTC: '13:00:00-05:00', Equipo_Local: '2do Grupo D', Bandera_Local: '', Equipo_Visita: '2do Grupo G', Bandera_Visita: '', Match_Num: 86},
+  {ID_Partido: 'M87', Fase: 'Ronda de 32', Fecha: '2026-07-03', Hora_UTC: '18:00:00-04:00', Equipo_Local: '1ro Grupo J', Bandera_Local: '', Equipo_Visita: '2do Grupo H', Bandera_Visita: '', Match_Num: 87},
+  {ID_Partido: 'M88', Fase: 'Ronda de 32', Fecha: '2026-07-03', Hora_UTC: '20:30:00-05:00', Equipo_Local: '1ro Grupo K', Bandera_Local: '', Equipo_Visita: '3ro Grupos D/E/I/J/L', Bandera_Visita: '', Match_Num: 88},
+  {ID_Partido: 'M89', Fase: 'Octavos', Fecha: '2026-07-04', Hora_UTC: '13:00:00-05:00', Equipo_Local: 'Ganador M73', Bandera_Local: '', Equipo_Visita: 'Ganador M75', Bandera_Visita: '', Match_Num: 89},
+  {ID_Partido: 'M90', Fase: 'Octavos', Fecha: '2026-07-04', Hora_UTC: '17:00:00-04:00', Equipo_Local: 'Ganador M74', Bandera_Local: '', Equipo_Visita: 'Ganador M77', Bandera_Visita: '', Match_Num: 90},
+  {ID_Partido: 'M91', Fase: 'Octavos', Fecha: '2026-07-05', Hora_UTC: '16:00:00-04:00', Equipo_Local: 'Ganador M76', Bandera_Local: '', Equipo_Visita: 'Ganador M78', Bandera_Visita: '', Match_Num: 91},
+  {ID_Partido: 'M92', Fase: 'Octavos', Fecha: '2026-07-05', Hora_UTC: '20:00:00-06:00', Equipo_Local: 'Ganador M79', Bandera_Local: '', Equipo_Visita: 'Ganador M80', Bandera_Visita: '', Match_Num: 92},
+  {ID_Partido: 'M93', Fase: 'Octavos', Fecha: '2026-07-06', Hora_UTC: '15:00:00-05:00', Equipo_Local: 'Ganador M81', Bandera_Local: '', Equipo_Visita: 'Ganador M82', Bandera_Visita: '', Match_Num: 93},
+  {ID_Partido: 'M94', Fase: 'Octavos', Fecha: '2026-07-06', Hora_UTC: '20:00:00-07:00', Equipo_Local: 'Ganador M83', Bandera_Local: '', Equipo_Visita: 'Ganador M84', Bandera_Visita: '', Match_Num: 94},
+  {ID_Partido: 'M95', Fase: 'Octavos', Fecha: '2026-07-07', Hora_UTC: '12:00:00-04:00', Equipo_Local: 'Ganador M85', Bandera_Local: '', Equipo_Visita: 'Ganador M86', Bandera_Visita: '', Match_Num: 95},
+  {ID_Partido: 'M96', Fase: 'Octavos', Fecha: '2026-07-07', Hora_UTC: '16:00:00-07:00', Equipo_Local: 'Ganador M87', Bandera_Local: '', Equipo_Visita: 'Ganador M88', Bandera_Visita: '', Match_Num: 96},
+  {ID_Partido: 'M97', Fase: 'Cuartos', Fecha: '2026-07-09', Hora_UTC: '16:00:00-04:00', Equipo_Local: 'Ganador M89', Bandera_Local: '', Equipo_Visita: 'Ganador M90', Bandera_Visita: '', Match_Num: 97},
+  {ID_Partido: 'M98', Fase: 'Cuartos', Fecha: '2026-07-10', Hora_UTC: '15:00:00-07:00', Equipo_Local: 'Ganador M93', Bandera_Local: '', Equipo_Visita: 'Ganador M94', Bandera_Visita: '', Match_Num: 98},
+  {ID_Partido: 'M99', Fase: 'Cuartos', Fecha: '2026-07-10', Hora_UTC: '20:00:00-04:00', Equipo_Local: 'Ganador M91', Bandera_Local: '', Equipo_Visita: 'Ganador M92', Bandera_Visita: '', Match_Num: 99},
+  {ID_Partido: 'M100', Fase: 'Cuartos', Fecha: '2026-07-11', Hora_UTC: '20:00:00-04:00', Equipo_Local: 'Ganador M95', Bandera_Local: '', Equipo_Visita: 'Ganador M96', Bandera_Visita: '', Match_Num: 100},
+  {ID_Partido: 'M101', Fase: 'Semifinales', Fecha: '2026-07-14', Hora_UTC: '20:00:00-04:00', Equipo_Local: 'Ganador M97', Bandera_Local: '', Equipo_Visita: 'Ganador M98', Bandera_Visita: '', Match_Num: 101},
+  {ID_Partido: 'M102', Fase: 'Semifinales', Fecha: '2026-07-15', Hora_UTC: '20:00:00-04:00', Equipo_Local: 'Ganador M99', Bandera_Local: '', Equipo_Visita: 'Ganador M100', Bandera_Visita: '', Match_Num: 102},
+  {ID_Partido: 'M103', Fase: 'Tercer Puesto', Fecha: '2026-07-18', Hora_UTC: '16:00:00-04:00', Equipo_Local: 'Perdedor M101', Bandera_Local: '', Equipo_Visita: 'Perdedor M102', Bandera_Visita: '', Match_Num: 103},
+  {ID_Partido: 'M104', Fase: 'Final', Fecha: '2026-07-19', Hora_UTC: '15:00:00-04:00', Equipo_Local: 'Ganador M101', Bandera_Local: '', Equipo_Visita: 'Ganador M102', Bandera_Visita: '', Match_Num: 104}
+];
+
 /**
  * Función inicial para crear las hojas necesarias
  */
@@ -162,193 +269,25 @@ function seedPartidos() {
     partidoSheet.getRange(2, 1, partidoSheet.getLastRow() - 1, 15).clearContent();
   }
 
-  const partidosData = [];
-
-  // Función auxiliar para calcular fecha de cierre (24h antes)
-  const getFechaCierre = (fecha, hora) => {
-    try {
-      const parts = hora.split(':');
-      // Asegurar formato HH:MM:SS
-      const hh = parts[0].padStart(2, '0');
-      const mm = parts[1].padStart(2, '0');
-
-      let ss = "00";
-      let offset = "";
-
-      if (parts[2]) {
-        if (parts[2].includes('-')) {
-          const sParts = parts[2].split('-');
-          ss = sParts[0].padStart(2, '0');
-          offset = '-' + sParts[1];
-        } else if (parts[2].includes('+')) {
-          const sParts = parts[2].split('+');
-          ss = sParts[0].padStart(2, '0');
-          offset = '+' + sParts[1];
-        } else {
-          ss = parts[2].padStart(2, '0');
-        }
-      }
-
-      const cleanHora = `${hh}:${mm}:${ss}${offset}`;
-      const f = new Date(fecha + 'T' + cleanHora);
-
-      // Validar si la fecha es válida
-      if (isNaN(f.getTime())) {
-        // Fallback a fecha del partido sin offset si falla
-        const fallback = new Date(fecha + 'T' + hh + ':' + mm + ':00');
-        fallback.setHours(fallback.getHours() - 24);
-        return fallback;
-      }
-
-      f.setHours(f.getHours() - 24);
-      return f;
-    } catch (e) {
-      // Último recurso
-      const lastResort = new Date(fecha);
-      lastResort.setHours(lastResort.getHours() - 24);
-      return lastResort;
-    }
-  };
-
-  // GRUPO A
-  partidosData.push(['M1', 'Grupos', 'A', '2026-06-11', '20:00:00-06:00', 'México', '🇲🇽', 'Corea del Sur', '🇰🇷', '', '', 'Abierto', getFechaCierre('2026-06-11', '20:00:00-06:00'), '', 1]);
-  partidosData.push(['M2', 'Grupos', 'A', '2026-06-12', '15:00:00-04:00', 'Sudáfrica', '🇿🇦', 'República Checa', '🇨🇿', '', '', 'Abierto', getFechaCierre('2026-06-12', '15:00:00-04:00'), '', 2]);
-  partidosData.push(['M3', 'Grupos', 'A', '2026-06-17', '15:00:00-04:00', 'República Checa', '🇨🇿', 'Corea del Sur', '🇰🇷', '', '', 'Abierto', getFechaCierre('2026-06-17', '15:00:00-04:00'), '', 3]);
-  partidosData.push(['M4', 'Grupos', 'A', '2026-06-17', '20:00:00-06:00', 'México', '🇲🇽', 'Sudáfrica', '🇿🇦', '', '', 'Abierto', getFechaCierre('2026-06-17', '20:00:00-06:00'), '', 4]);
-  partidosData.push(['M5', 'Grupos', 'A', '2026-06-23', '15:00:00-04:00', 'Corea del Sur', '🇰🇷', 'Sudáfrica', '🇿🇦', '', '', 'Abierto', getFechaCierre('2026-06-23', '15:00:00-04:00'), '', 5]);
-  partidosData.push(['M6', 'Grupos', 'A', '2026-06-23', '20:00:00-06:00', 'República Checa', '🇨🇿', 'México', '🇲🇽', '', '', 'Abierto', getFechaCierre('2026-06-23', '20:00:00-06:00'), '', 6]);
-
-  // GRUPO B
-  partidosData.push(['M7', 'Grupos', 'B', '2026-06-12', '15:00:00-04:00', 'Canadá', '🇨🇦', 'Bosnia y Herzegovina', '🇧🇦', '', '', 'Abierto', getFechaCierre('2026-06-12', '15:00:00-04:00'), '', 7]);
-  partidosData.push(['M8', 'Grupos', 'B', '2026-06-13', '12:00:00-07:00', 'Qatar', '🇶🇦', 'Suiza', '🇨🇭', '', '', 'Abierto', getFechaCierre('2026-06-13', '12:00:00-07:00'), '', 8]);
-  partidosData.push(['M9', 'Grupos', 'B', '2026-06-18', '12:00:00-07:00', 'Suiza', '🇨🇭', 'Bosnia y Herzegovina', '🇧🇦', '', '', 'Abierto', getFechaCierre('2026-06-18', '12:00:00-07:00'), '', 9]);
-  partidosData.push(['M10', 'Grupos', 'B', '2026-06-18', '15:00:00-07:00', 'Canadá', '🇨🇦', 'Qatar', '🇶🇦', '', '', 'Abierto', getFechaCierre('2026-06-18', '15:00:00-07:00'), '', 10]);
-  partidosData.push(['M11', 'Grupos', 'B', '2026-06-24', '12:00:00-07:00', 'Bosnia y Herzegovina', '🇧🇦', 'Qatar', '🇶🇦', '', '', 'Abierto', getFechaCierre('2026-06-24', '12:00:00-07:00'), '', 11]);
-  partidosData.push(['M12', 'Grupos', 'B', '2026-06-24', '12:00:00-07:00', 'Suiza', '🇨🇭', 'Canadá', '🇨🇦', '', '', 'Abierto', getFechaCierre('2026-06-24', '12:00:00-07:00'), '', 12]);
-
-  // GRUPO C
-  partidosData.push(['M13', 'Grupos', 'C', '2026-06-13', '18:00:00-04:00', 'Brasil', '🇧🇷', 'Marruecos', '🇲🇦', '', '', 'Abierto', getFechaCierre('2026-06-13', '18:00:00-04:00'), '', 13]);
-  partidosData.push(['M14', 'Grupos', 'C', '2026-06-13', '21:00:00-04:00', 'Haití', '🇭🇹', 'Escocia', '🏴󠁧󠁢󠁳󠁣󠁴󠁿', '', '', 'Abierto', getFechaCierre('2026-06-13', '21:00:00-04:00'), '', 14]);
-  partidosData.push(['M15', 'Grupos', 'C', '2026-06-19', '18:00:00-04:00', 'Escocia', '🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'Marruecos', '🇲🇦', '', '', 'Abierto', getFechaCierre('2026-06-19', '18:00:00-04:00'), '', 15]);
-  partidosData.push(['M16', 'Grupos', 'C', '2026-06-19', '20:30:00-04:00', 'Brasil', '🇧🇷', 'Haití', '🇭🇹', '', '', 'Abierto', getFechaCierre('2026-06-19', '20:30:00-04:00'), '', 16]);
-  partidosData.push(['M17', 'Grupos', 'C', '2026-06-24', '18:00:00-04:00', 'Escocia', '🏴󠁧󠁢󠁳󠁣󠁴󠁿', 'Brasil', '🇧🇷', '', '', 'Abierto', getFechaCierre('2026-06-24', '18:00:00-04:00'), '', 17]);
-  partidosData.push(['M18', 'Grupos', 'C', '2026-06-24', '18:00:00-04:00', 'Marruecos', '🇲🇦', 'Haití', '🇭🇹', '', '', 'Abierto', getFechaCierre('2026-06-24', '18:00:00-04:00'), '', 18]);
-
-  // GRUPO D
-  partidosData.push(['M19', 'Grupos', 'D', '2026-06-14', '16:00:00-07:00', 'Estados Unidos', '🇺🇸', 'Paraguay', '🇵🇾', '', '', 'Abierto', getFechaCierre('2026-06-14', '16:00:00-07:00'), '', 19]);
-  partidosData.push(['M20', 'Grupos', 'D', '2026-06-14', '19:00:00-07:00', 'Australia', '🇦🇺', 'Turquía', '🇹🇷', '', '', 'Abierto', getFechaCierre('2026-06-14', '19:00:00-07:00'), '', 20]);
-  partidosData.push(['M21', 'Grupos', 'D', '2026-06-20', '16:00:00-07:00', 'Turquía', '🇹🇷', 'Paraguay', '🇵🇾', '', '', 'Abierto', getFechaCierre('2026-06-20', '16:00:00-07:00'), '', 21]);
-  partidosData.push(['M22', 'Grupos', 'D', '2026-06-20', '19:00:00-07:00', 'Estados Unidos', '🇺🇸', 'Australia', '🇦🇺', '', '', 'Abierto', getFechaCierre('2026-06-20', '19:00:00-07:00'), '', 22]);
-  partidosData.push(['M23', 'Grupos', 'D', '2026-06-25', '19:00:00-07:00', 'Paraguay', '🇵🇾', 'Australia', '🇦🇺', '', '', 'Abierto', getFechaCierre('2026-06-25', '19:00:00-07:00'), '', 23]);
-  partidosData.push(['M24', 'Grupos', 'D', '2026-06-25', '22:00:00-07:00', 'Turquía', '🇹🇷', 'Estados Unidos', '🇺🇸', '', '', 'Abierto', getFechaCierre('2026-06-25', '22:00:00-07:00'), '', 24]);
-
-  // GRUPO E
-  partidosData.push(['M25', 'Grupos', 'E', '2026-06-14', '16:00:00-04:00', 'Alemania', '🇩🇪', 'Curazao', '🇨🇼', '', '', 'Abierto', getFechaCierre('2026-06-14', '16:00:00-04:00'), '', 25]);
-  partidosData.push(['M26', 'Grupos', 'E', '2026-06-14', '19:00:00-04:00', 'Costa de Marfil', '🇨🇮', 'Ecuador', '🇪🇨', '', '', 'Abierto', getFechaCierre('2026-06-14', '19:00:00-04:00'), '', 26]);
-  partidosData.push(['M27', 'Grupos', 'E', '2026-06-20', '16:00:00-04:00', 'Ecuador', '🇪🇨', 'Curazao', '🇨🇼', '', '', 'Abierto', getFechaCierre('2026-06-20', '16:00:00-04:00'), '', 27]);
-  partidosData.push(['M28', 'Grupos', 'E', '2026-06-20', '19:00:00-04:00', 'Alemania', '🇩🇪', 'Costa de Marfil', '🇨🇮', '', '', 'Abierto', getFechaCierre('2026-06-20', '19:00:00-04:00'), '', 28]);
-  partidosData.push(['M29', 'Grupos', 'E', '2026-06-25', '16:00:00-04:00', 'Curazao', '🇨🇼', 'Costa de Marfil', '🇨🇮', '', '', 'Abierto', getFechaCierre('2026-06-25', '16:00:00-04:00'), '', 29]);
-  partidosData.push(['M30', 'Grupos', 'E', '2026-06-25', '16:00:00-04:00', 'Ecuador', '🇪🇨', 'Alemania', '🇩🇪', '', '', 'Abierto', getFechaCierre('2026-06-25', '16:00:00-04:00'), '', 30]);
-
-  // GRUPO F
-  partidosData.push(['M31', 'Grupos', 'F', '2026-06-14', '15:00:00-05:00', 'Países Bajos', '🇳🇱', 'Japón', '🇯🇵', '', '', 'Abierto', getFechaCierre('2026-06-14', '15:00:00-05:00'), '', 31]);
-  partidosData.push(['M32', 'Grupos', 'F', '2026-06-14', '20:00:00-06:00', 'Suecia', '🇸🇪', 'Túnez', '🇹🇳', '', '', 'Abierto', getFechaCierre('2026-06-14', '20:00:00-06:00'), '', 32]);
-  partidosData.push(['M33', 'Grupos', 'F', '2026-06-20', '12:00:00-05:00', 'Países Bajos', '🇳🇱', 'Suecia', '🇸🇪', '', '', 'Abierto', getFechaCierre('2026-06-20', '12:00:00-05:00'), '', 33]);
-  partidosData.push(['M34', 'Grupos', 'F', '2026-06-20', '22:00:00-06:00', 'Túnez', '🇹🇳', 'Japón', '🇯🇵', '', '', 'Abierto', getFechaCierre('2026-06-20', '22:00:00-06:00'), '', 34]);
-  partidosData.push(['M35', 'Grupos', 'F', '2026-06-25', '18:00:00-05:00', 'Japón', '🇯🇵', 'Suecia', '🇸🇪', '', '', 'Abierto', getFechaCierre('2026-06-25', '18:00:00-05:00'), '', 35]);
-  partidosData.push(['M36', 'Grupos', 'F', '2026-06-25', '18:00:00-05:00', 'Túnez', '🇹🇳', 'Países Bajos', '🇳🇱', '', '', 'Abierto', getFechaCierre('2026-06-25', '18:00:00-05:00'), '', 36]);
-
-  // GRUPO G
-  partidosData.push(['M37', 'Grupos', 'G', '2026-06-15', '19:00:00-07:00', 'Bélgica', '🇧🇪', 'Egipto', '🇪🇬', '', '', 'Abierto', getFechaCierre('2026-06-15', '19:00:00-07:00'), '', 37]);
-  partidosData.push(['M38', 'Grupos', 'G', '2026-06-15', '22:00:00-07:00', 'Irán', '🇮🇷', 'Nueva Zelanda', '🇳🇿', '', '', 'Abierto', getFechaCierre('2026-06-15', '22:00:00-07:00'), '', 38]);
-  partidosData.push(['M39', 'Grupos', 'G', '2026-06-21', '16:00:00-07:00', 'Nueva Zelanda', '🇳🇿', 'Egipto', '🇪🇬', '', '', 'Abierto', getFechaCierre('2026-06-21', '16:00:00-07:00'), '', 39]);
-  partidosData.push(['M40', 'Grupos', 'G', '2026-06-21', '19:00:00-07:00', 'Bélgica', '🇧🇪', 'Irán', '🇮🇷', '', '', 'Abierto', getFechaCierre('2026-06-21', '19:00:00-07:00'), '', 40]);
-  partidosData.push(['M41', 'Grupos', 'G', '2026-06-26', '19:00:00-07:00', 'Egipto', '🇪🇬', 'Irán', '🇮🇷', '', '', 'Abierto', getFechaCierre('2026-06-26', '19:00:00-07:00'), '', 41]);
-  partidosData.push(['M42', 'Grupos', 'G', '2026-06-26', '22:00:00-07:00', 'Nueva Zelanda', '🇳🇿', 'Bélgica', '🇧🇪', '', '', 'Abierto', getFechaCierre('2026-06-26', '22:00:00-07:00'), '', 42]);
-
-  // GRUPO H
-  partidosData.push(['M43', 'Grupos', 'H', '2026-06-15', '14:00:00-06:00', 'España', '🇪🇸', 'Cabo Verde', '🇨🇻', '', '', 'Abierto', getFechaCierre('2026-06-15', '14:00:00-06:00'), '', 43]);
-  partidosData.push(['M44', 'Grupos', 'H', '2026-06-15', '17:00:00-06:00', 'Arabia Saudita', '🇸🇦', 'Uruguay', '🇺🇾', '', '', 'Abierto', getFechaCierre('2026-06-15', '17:00:00-06:00'), '', 44]);
-  partidosData.push(['M45', 'Grupos', 'H', '2026-06-21', '14:00:00-06:00', 'Uruguay', '🇺🇾', 'Cabo Verde', '🇨🇻', '', '', 'Abierto', getFechaCierre('2026-06-21', '14:00:00-06:00'), '', 45]);
-  partidosData.push(['M46', 'Grupos', 'H', '2026-06-21', '17:00:00-06:00', 'España', '🇪🇸', 'Arabia Saudita', '🇸🇦', '', '', 'Abierto', getFechaCierre('2026-06-21', '17:00:00-06:00'), '', 46]);
-  partidosData.push(['M47', 'Grupos', 'H', '2026-06-26', '20:00:00-06:00', 'Cabo Verde', '🇨🇻', 'Arabia Saudita', '🇸🇦', '', '', 'Abierto', getFechaCierre('2026-06-26', '20:00:00-06:00'), '', 47]);
-  partidosData.push(['M48', 'Grupos', 'H', '2026-06-26', '20:00:00-06:00', 'Uruguay', '🇺🇾', 'España', '🇪🇸', '', '', 'Abierto', getFechaCierre('2026-06-26', '20:00:00-06:00'), '', 48]);
-
-  // GRUPO I
-  partidosData.push(['M49', 'Grupos', 'I', '2026-06-16', '15:00:00-04:00', 'Francia', '🇫🇷', 'Senegal', '🇸🇳', '', '', 'Abierto', getFechaCierre('2026-06-16', '15:00:00-04:00'), '', 49]);
-  partidosData.push(['M50', 'Grupos', 'I', '2026-06-16', '18:00:00-04:00', 'Irak', '🇮🇶', 'Noruega', '🇳🇴', '', '', 'Abierto', getFechaCierre('2026-06-16', '18:00:00-04:00'), '', 50]);
-  partidosData.push(['M51', 'Grupos', 'I', '2026-06-22', '17:00:00-04:00', 'Francia', '🇫🇷', 'Irak', '🇮🇶', '', '', 'Abierto', getFechaCierre('2026-06-22', '17:00:00-04:00'), '', 51]);
-  partidosData.push(['M52', 'Grupos', 'I', '2026-06-22', '20:00:00-04:00', 'Noruega', '🇳🇴', 'Senegal', '🇸🇳', '', '', 'Abierto', getFechaCierre('2026-06-22', '20:00:00-04:00'), '', 52]);
-  partidosData.push(['M53', 'Grupos', 'I', '2026-06-26', '15:00:00-04:00', 'Senegal', '🇸🇳', 'Irak', '🇮🇶', '', '', 'Abierto', getFechaCierre('2026-06-26', '15:00:00-04:00'), '', 53]);
-  partidosData.push(['M54', 'Grupos', 'I', '2026-06-26', '15:00:00-04:00', 'Noruega', '🇳🇴', 'Francia', '🇫🇷', '', '', 'Abierto', getFechaCierre('2026-06-26', '15:00:00-04:00'), '', 54]);
-
-  // GRUPO J
-  partidosData.push(['M55', 'Grupos', 'J', '2026-06-16', '20:00:00-05:00', 'Argentina', '🇦🇷', 'Argelia', '🇩🇿', '', '', 'Abierto', getFechaCierre('2026-06-16', '20:00:00-05:00'), '', 55]);
-  partidosData.push(['M56', 'Grupos', 'J', '2026-06-16', '21:00:00-07:00', 'Austria', '🇦🇹', 'Jordania', '🇯🇴', '', '', 'Abierto', getFechaCierre('2026-06-16', '21:00:00-07:00'), '', 56]);
-  partidosData.push(['M57', 'Grupos', 'J', '2026-06-22', '12:00:00-05:00', 'Argentina', '🇦🇷', 'Austria', '🇦🇹', '', '', 'Abierto', getFechaCierre('2026-06-22', '12:00:00-05:00'), '', 57]);
-  partidosData.push(['M58', 'Grupos', 'J', '2026-06-22', '20:00:00-07:00', 'Jordania', '🇯🇴', 'Argelia', '🇩🇿', '', '', 'Abierto', getFechaCierre('2026-06-22', '20:00:00-07:00'), '', 58]);
-  partidosData.push(['M59', 'Grupos', 'J', '2026-06-27', '21:00:00-05:00', 'Argelia', '🇩🇿', 'Austria', '🇦🇹', '', '', 'Abierto', getFechaCierre('2026-06-27', '21:00:00-05:00'), '', 59]);
-  partidosData.push(['M60', 'Grupos', 'J', '2026-06-27', '21:00:00-05:00', 'Jordania', '🇯🇴', 'Argentina', '🇦🇷', '', '', 'Abierto', getFechaCierre('2026-06-27', '21:00:00-05:00'), '', 60]);
-
-  // GRUPO K
-  partidosData.push(['M61', 'Grupos', 'K', '2026-06-17', '12:00:00-05:00', 'Portugal', '🇵🇹', 'RD Congo', '🇨🇩', '', '', 'Abierto', getFechaCierre('2026-06-17', '12:00:00-05:00'), '', 61]);
-  partidosData.push(['M62', 'Grupos', 'K', '2026-06-17', '20:00:00-06:00', 'Uzbekistán', '🇺🇿', 'Colombia', '🇨🇴', '', '', 'Abierto', getFechaCierre('2026-06-17', '20:00:00-06:00'), '', 62]);
-  partidosData.push(['M63', 'Grupos', 'K', '2026-06-23', '12:00:00-05:00', 'Portugal', '🇵🇹', 'Uzbekistán', '🇺🇿', '', '', 'Abierto', getFechaCierre('2026-06-23', '12:00:00-05:00'), '', 63]);
-  partidosData.push(['M64', 'Grupos', 'K', '2026-06-23', '20:00:00-06:00', 'Colombia', '🇨🇴', 'RD Congo', '🇨🇩', '', '', 'Abierto', getFechaCierre('2026-06-23', '20:00:00-06:00'), '', 64]);
-  partidosData.push(['M65', 'Grupos', 'K', '2026-06-27', '19:30:00-04:00', 'Colombia', '🇨🇴', 'Portugal', '🇵🇹', '', '', 'Abierto', getFechaCierre('2026-06-27', '19:30:00-04:00'), '', 65]);
-  partidosData.push(['M66', 'Grupos', 'K', '2026-06-27', '19:30:00-04:00', 'RD Congo', '🇨🇩', 'Uzbekistán', '🇺🇿', '', '', 'Abierto', getFechaCierre('2026-06-27', '19:30:00-04:00'), '', 66]);
-
-  // GRUPO L
-  partidosData.push(['M67', 'Grupos', 'L', '2026-06-17', '14:00:00-04:00', 'Inglaterra', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'Croacia', '🇭🇷', '', '', 'Abierto', getFechaCierre('2026-06-17', '14:00:00-04:00'), '', 67]);
-  partidosData.push(['M68', 'Grupos', 'L', '2026-06-17', '17:00:00-04:00', 'Ghana', '🇬🇭', 'Panamá', '🇵🇦', '', '', 'Abierto', getFechaCierre('2026-06-17', '17:00:00-04:00'), '', 68]);
-  partidosData.push(['M69', 'Grupos', 'L', '2026-06-23', '14:00:00-04:00', 'Croacia', '🇭🇷', 'Panamá', '🇵🇦', '', '', 'Abierto', getFechaCierre('2026-06-23', '14:00:00-04:00'), '', 69]);
-  partidosData.push(['M70', 'Grupos', 'L', '2026-06-23', '17:00:00-04:00', 'Inglaterra', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', 'Ghana', '🇬🇭', '', '', 'Abierto', getFechaCierre('2026-06-23', '17:00:00-04:00'), '', 70]);
-  partidosData.push(['M71', 'Grupos', 'L', '2026-06-27', '17:00:00-04:00', 'Panamá', '🇵🇦', 'Inglaterra', '🏴󠁧󠁢󠁥󠁮󠁧󠁿', '', '', 'Abierto', getFechaCierre('2026-06-27', '17:00:00-04:00'), '', 71]);
-  partidosData.push(['M72', 'Grupos', 'L', '2026-06-27', '17:00:00-04:00', 'Ghana', '🇬🇭', 'Croacia', '🇭🇷', '', '', 'Abierto', getFechaCierre('2026-06-27', '17:00:00-04:00'), '', 72]);
-
-  // ELIMINATORIA - RONDA DE 32
-  partidosData.push(['M73', 'Ronda de 32', '', '2026-06-28', '12:00:00-07:00', '2do Grupo A', '', '2do Grupo B', '', '', '', 'Abierto', getFechaCierre('2026-06-28', '12:00:00-07:00'), '', 73]);
-  partidosData.push(['M74', 'Ronda de 32', '', '2026-06-29', '12:00:00-05:00', '1ro Grupo C', '', '2do Grupo F', '', '', '', 'Abierto', getFechaCierre('2026-06-29', '12:00:00-05:00'), '', 74]);
-  partidosData.push(['M75', 'Ronda de 32', '', '2026-06-29', '16:30:00-04:00', '1ro Grupo E', '', '3ro Grupos A/B/C/D/F', '', '', '', 'Abierto', getFechaCierre('2026-06-29', '16:30:00-04:00'), '', 75]);
-  partidosData.push(['M76', 'Ronda de 32', '', '2026-06-29', '19:00:00-06:00', '1ro Grupo F', '', '2do Grupo C', '', '', '', 'Abierto', getFechaCierre('2026-06-29', '19:00:00-06:00'), '', 76]);
-  partidosData.push(['M77', 'Ronda de 32', '', '2026-06-30', '12:00:00-05:00', '2do Grupo E', '', '2do Grupo I', '', '', '', 'Abierto', getFechaCierre('2026-06-30', '12:00:00-05:00'), '', 77]);
-  partidosData.push(['M78', 'Ronda de 32', '', '2026-06-30', '17:00:00-04:00', '1ro Grupo I', '', '3ro Grupos C/D/F/G/H', '', '', '', 'Abierto', getFechaCierre('2026-06-30', '17:00:00-04:00'), '', 78]);
-  partidosData.push(['M79', 'Ronda de 32', '', '2026-06-30', '19:00:00-06:00', '1ro Grupo A', '', '3ro Grupos C/E/F/H/I', '', '', '', 'Abierto', getFechaCierre('2026-06-30', '19:00:00-06:00'), '', 79]);
-  partidosData.push(['M80', 'Ronda de 32', '', '2026-07-01', '12:00:00-04:00', '1ro Grupo L', '', '3ro Grupos E/H/I/J/K', '', '', '', 'Abierto', getFechaCierre('2026-07-01', '12:00:00-04:00'), '', 80]);
-  partidosData.push(['M81', 'Ronda de 32', '', '2026-07-01', '13:00:00-07:00', '1ro Grupo G', '', '3ro Grupos A/E/H/I/J', '', '', '', 'Abierto', getFechaCierre('2026-07-01', '13:00:00-07:00'), '', 81]);
-  partidosData.push(['M82', 'Ronda de 32', '', '2026-07-01', '17:00:00-07:00', '1ro Grupo D', '', '3ro Grupos B/E/F/I/J', '', '', '', 'Abierto', getFechaCierre('2026-07-01', '17:00:00-07:00'), '', 82]);
-  partidosData.push(['M83', 'Ronda de 32', '', '2026-07-02', '12:00:00-07:00', '1ro Grupo H', '', '2do Grupo J', '', '', '', 'Abierto', getFechaCierre('2026-07-02', '12:00:00-07:00'), '', 83]);
-  partidosData.push(['M84', 'Ronda de 32', '', '2026-07-02', '19:00:00-04:00', '2do Grupo K', '', '2do Grupo L', '', '', '', 'Abierto', getFechaCierre('2026-07-02', '19:00:00-04:00'), '', 84]);
-  partidosData.push(['M85', 'Ronda de 32', '', '2026-07-02', '20:00:00-07:00', '1ro Grupo B', '', '3ro Grupos E/F/G/I/J', '', '', '', 'Abierto', getFechaCierre('2026-07-02', '20:00:00-07:00'), '', 85]);
-  partidosData.push(['M86', 'Ronda de 32', '', '2026-07-03', '13:00:00-05:00', '2do Grupo D', '', '2do Grupo G', '', '', '', 'Abierto', getFechaCierre('2026-07-03', '13:00:00-05:00'), '', 86]);
-  partidosData.push(['M87', 'Ronda de 32', '', '2026-07-03', '18:00:00-04:00', '1ro Grupo J', '', '2do Grupo H', '', '', '', 'Abierto', getFechaCierre('2026-07-03', '18:00:00-04:00'), '', 87]);
-  partidosData.push(['M88', 'Ronda de 32', '', '2026-07-03', '20:30:00-05:00', '1ro Grupo K', '', '3ro Grupos D/E/I/J/L', '', '', '', 'Abierto', getFechaCierre('2026-07-03', '20:30:00-05:00'), '', 88]);
-
-  // OCTAVOS DE FINAL
-  partidosData.push(['M89', 'Octavos', '', '2026-07-04', '13:00:00-05:00', 'Ganador M73', '', 'Ganador M75', '', '', '', 'Abierto', getFechaCierre('2026-07-04', '13:00:00-05:00'), '', 89]);
-  partidosData.push(['M90', 'Octavos', '', '2026-07-04', '17:00:00-04:00', 'Ganador M74', '', 'Ganador M77', '', '', '', 'Abierto', getFechaCierre('2026-07-04', '17:00:00-04:00'), '', 90]);
-  partidosData.push(['M91', 'Octavos', '', '2026-07-05', '16:00:00-04:00', 'Ganador M76', '', 'Ganador M78', '', '', '', 'Abierto', getFechaCierre('2026-07-05', '16:00:00-04:00'), '', 91]);
-  partidosData.push(['M92', 'Octavos', '', '2026-07-05', '20:00:00-06:00', 'Ganador M79', '', 'Ganador M80', '', '', '', 'Abierto', getFechaCierre('2026-07-05', '20:00:00-06:00'), '', 92]);
-  partidosData.push(['M93', 'Octavos', '', '2026-07-06', '15:00:00-05:00', 'Ganador M81', '', 'Ganador M82', '', '', '', 'Abierto', getFechaCierre('2026-07-06', '15:00:00-05:00'), '', 93]);
-  partidosData.push(['M94', 'Octavos', '', '2026-07-06', '20:00:00-07:00', 'Ganador M83', '', 'Ganador M84', '', '', '', 'Abierto', getFechaCierre('2026-07-06', '20:00:00-07:00'), '', 94]);
-  partidosData.push(['M95', 'Octavos', '', '2026-07-07', '12:00:00-04:00', 'Ganador M85', '', 'Ganador M86', '', '', '', 'Abierto', getFechaCierre('2026-07-07', '12:00:00-04:00'), '', 95]);
-  partidosData.push(['M96', 'Octavos', '', '2026-07-07', '16:00:00-07:00', 'Ganador M87', '', 'Ganador M88', '', '', '', 'Abierto', getFechaCierre('2026-07-07', '16:00:00-07:00'), '', 96]);
-
-  // CUARTOS DE FINAL
-  partidosData.push(['M97', 'Cuartos', '', '2026-07-09', '16:00:00-04:00', 'Ganador M89', '', 'Ganador M90', '', '', '', 'Abierto', getFechaCierre('2026-07-09', '16:00:00-04:00'), '', 97]);
-  partidosData.push(['M98', 'Cuartos', '', '2026-07-10', '15:00:00-07:00', 'Ganador M93', '', 'Ganador M94', '', '', '', 'Abierto', getFechaCierre('2026-07-10', '15:00:00-07:00'), '', 98]);
-  partidosData.push(['M99', 'Cuartos', '', '2026-07-10', '20:00:00-04:00', 'Ganador M91', '', 'Ganador M92', '', '', '', 'Abierto', getFechaCierre('2026-07-10', '20:00:00-04:00'), '', 99]);
-  partidosData.push(['M100', 'Cuartos', '', '2026-07-11', '20:00:00-04:00', 'Ganador M95', '', 'Ganador M96', '', '', '', 'Abierto', getFechaCierre('2026-07-11', '20:00:00-04:00'), '', 100]);
-
-  // SEMIFINALES
-  partidosData.push(['M101', 'Semifinales', '', '2026-07-14', '20:00:00-04:00', 'Ganador M97', '', 'Ganador M98', '', '', '', 'Abierto', getFechaCierre('2026-07-14', '20:00:00-04:00'), '', 101]);
-  partidosData.push(['M102', 'Semifinales', '', '2026-07-15', '20:00:00-04:00', 'Ganador M99', '', 'Ganador M100', '', '', '', 'Abierto', getFechaCierre('2026-07-15', '20:00:00-04:00'), '', 102]);
-
-  // TERCER PUESTO
-  partidosData.push(['M103', 'Tercer Puesto', '', '2026-07-18', '16:00:00-04:00', 'Perdedor M101', '', 'Perdedor M102', '', '', '', 'Abierto', getFechaCierre('2026-07-18', '16:00:00-04:00'), '', 103]);
-
-  // FINAL
-  partidosData.push(['M104', 'Final', '', '2026-07-19', '15:00:00-04:00', 'Ganador M101', '', 'Ganador M102', '', '', '', 'Abierto', getFechaCierre('2026-07-19', '15:00:00-04:00'), '', 104]);
+  const partidosData = CALENDARIO_HARDCODED.map(m => {
+    return [
+      m.ID_Partido,
+      m.Fase,
+      m.Grupo || '',
+      m.Fecha,
+      m.Hora_UTC,
+      m.Equipo_Local,
+      m.Bandera_Local || '',
+      m.Equipo_Visita,
+      m.Bandera_Visita || '',
+      '',
+      '',
+      'Abierto',
+      calcularFechaCierreLocal(m.Fecha, m.Hora_UTC),
+      '',
+      m.Match_Num
+    ];
+  });
 
   partidoSheet.getRange(2, 1, partidosData.length, 15).setValues(partidosData);
   SpreadsheetApp.flush();
@@ -813,19 +752,62 @@ function obtenerPartidos() {
   try {
     let data = getSheetData('Partidos');
 
-    // Si no hay partidos o las hojas no están listas, intentamos auto-reparar
     if (data.length === 0) {
-      inicializarSistema();
-      seedPartidos();
-      data = getSheetData('Partidos');
+      // Fallback inmediato a datos hardcoded si la hoja está vacía
+      // Esto asegura que el usuario SIEMPRE vea partidos.
+      return CALENDARIO_HARDCODED.map(m => {
+        // Enriquecemos con campos vacíos de resultados para que el frontend no falle
+        return {
+          ...m,
+          Gol_Local_Real: '',
+          Gol_Visita_Real: '',
+          Estado: 'Abierto',
+          Fecha_Cierre: calcularFechaCierreLocal(m.Fecha, m.Hora_UTC)
+        };
+      });
     }
 
     return data;
   } catch (e) {
     logError('obtenerPartidos', e.message, '');
-    // En caso de error crítico, intentamos inicializar una última vez
-    try { inicializarSistema(); seedPartidos(); } catch(err) {}
-    return getSheetData('Partidos');
+    // Fallback en caso de error de lectura de la hoja
+    return CALENDARIO_HARDCODED.map(m => ({
+      ...m,
+      Gol_Local_Real: '',
+      Gol_Visita_Real: '',
+      Estado: 'Abierto',
+      Fecha_Cierre: calcularFechaCierreLocal(m.Fecha, m.Hora_UTC)
+    }));
+  }
+}
+
+// Función auxiliar interna para el fallback
+function calcularFechaCierreLocal(fecha, hora) {
+  try {
+    const parts = hora.split(':');
+    const hh = parts[0].padStart(2, '0');
+    const mm = parts[1].padStart(2, '0');
+    let ss = "00";
+    let offset = "";
+    if (parts[2]) {
+      if (parts[2].includes('-')) {
+        const sParts = parts[2].split('-');
+        ss = sParts[0].padStart(2, '0');
+        offset = '-' + sParts[1];
+      } else if (parts[2].includes('+')) {
+        const sParts = parts[2].split('+');
+        ss = sParts[0].padStart(2, '0');
+        offset = '+' + sParts[1];
+      } else {
+        ss = parts[2].padStart(2, '0');
+      }
+    }
+    const cleanHora = `${hh}:${mm}:${ss}${offset}`;
+    const f = new Date(fecha + 'T' + cleanHora);
+    f.setHours(f.getHours() - 24);
+    return f;
+  } catch (e) {
+    return new Date(fecha);
   }
 }
 

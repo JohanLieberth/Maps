@@ -461,11 +461,10 @@
       google.script.run
         .withSuccessHandler(partidos => {
           if (!partidos || partidos.length === 0) {
-             alert("No se pudieron cargar los partidos. Contacta al admin.");
-             hideSpinner();
-             return;
+             // Ya no alertamos inmediatamente si el backend tiene un fallback hardcoded
+             console.warn("Partidos cargados mediante fallback o vacíos.");
           }
-          partidosGlobal = partidos;
+          partidosGlobal = partidos || [];
           google.script.run
             .withSuccessHandler(pronosticos => {
               pronosticosUsuario = pronosticos || [];
