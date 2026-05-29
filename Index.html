@@ -138,6 +138,12 @@
       el.style.display = 'block'; setTimeout(() => el.style.display = 'none', 3500);
     }
 
+    function escapeHtml(text) {
+      if(!text) return "";
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(text).replace(/[&<>"']/g, function(m) { return map[m]; });
+    }
+
     function selAuth(t) {
       document.getElementById('card-reg').classList.toggle('active', t === 'reg');
       document.getElementById('card-login').classList.toggle('active', t === 'login');
@@ -187,6 +193,9 @@
           partidosGlobal = res.partidos;
           renderizarPartidos(res.partidos);
           iniciarContadores();
+          google.script.run.withSuccessHandler(u => {
+             if(u) document.getElementById('stats-header').innerHTML = `<div class="card" style="padding:10px;"><b>PTS:</b> ${u.Puntos_Totales}</div><div class="card" style="padding:10px;"><b>EX:</b> ${u.Aciertos_Exactos}</div>`;
+          }).obtenerParticipante(userEmail);
         } else { showToast(res.error, "error"); }
         showSpinner(false);
       }).obtenerPartidosParaUsuario(userEmail);
@@ -196,7 +205,7 @@
       const container = document.getElementById('lista-partidos');
       container.innerHTML = "";
       let fase = "";
-      partidos.sort((a,b) => a.matchNum - b.matchNum).forEach(p => {
+      partidos.sort((a,b) => Number(a.matchNum) - Number(b.matchNum)).forEach(p => {
         if(p.fase !== fase) {
           fase = p.fase;
           const h = document.createElement('div'); h.className = 'fase-header'; h.innerText = fase;
@@ -208,13 +217,13 @@
         const gv = p.miPronostico ? p.miPronostico.golVisita : "";
 
         row.innerHTML = `
-          <div class="equipo-col local"><span>${p.equipoLocal}</span><img src="${p.urlBanderaLocal}" class="bandera-img" onerror="this.src='https://flagcdn.com/w80/un.png'"></div>
+          <div class="equipo-col local"><span>${escapeHtml(p.equipoLocal)}</span><img src="${p.urlBanderaLocal}" class="bandera-img" onerror="this.src='https://flagcdn.com/w80/un.png'"></div>
           <div class="marcadores">
             <input type="number" id="L-${p.idPartido}" class="input-marcador" value="${gl}" ${p.inputsHabilitados ? '' : 'disabled'}>
             <span>-</span>
             <input type="number" id="V-${p.idPartido}" class="input-marcador" value="${gv}" ${p.inputsHabilitados ? '' : 'disabled'}>
           </div>
-          <div class="equipo-col visita"><img src="${p.urlBanderaVisita}" class="bandera-img" onerror="this.src='https://flagcdn.com/w80/un.png'"><span>${p.equipoVisita}</span></div>
+          <div class="equipo-col visita"><img src="${p.urlBanderaVisita}" class="bandera-img" onerror="this.src='https://flagcdn.com/w80/un.png'"><span>${escapeHtml(p.equipoVisita)}</span></div>
           <div class="estado-info">
             <span class="badge badge-${p.estadoPronostico.toLowerCase()}">${p.estadoPronostico}</span>
             <span class="contador" id="cont-${p.idPartido}"></span>
@@ -276,7 +285,7 @@
       showSpinner(true);
       google.script.run.withSuccessHandler(data => {
         let h = `<table style="width:100%; border-collapse:collapse; text-align:left;"><tr style="background:#1E293B; color:white;"><th style="padding:10px;">POS</th><th style="padding:10px;">ALIAS</th><th style="padding:10px;">PTS</th></tr>`;
-        data.forEach((r, i) => { h += `<tr style="border-bottom:1px solid #eee;"><td style="padding:10px;">${i+1}</td><td style="padding:10px;">${r.Alias}</td><td style="padding:10px;">${r.Puntos_Totales}</td></tr>`; });
+        data.forEach((r, i) => { h += `<tr style="border-bottom:1px solid #eee;"><td style="padding:10px;">${i+1}</td><td style="padding:10px;">${escapeHtml(r.Alias)}</td><td style="padding:10px;">${r.Puntos_Totales}</td></tr>`; });
         h += `</table>`;
         document.getElementById('ranking-container').innerHTML = h;
         showSpinner(false);
@@ -289,11 +298,11 @@
         const container = document.getElementById('resultados-fixture');
         container.innerHTML = "";
         let f = "";
-        res.partidos.sort((a,b) => a.matchNum - b.matchNum).forEach(p => {
+        res.partidos.sort((a,b) => Number(a.matchNum) - Number(b.matchNum)).forEach(p => {
           if(p.fase !== f) { f = p.fase; const h = document.createElement('div'); h.className = 'fase-header'; h.innerText = f; container.appendChild(h); }
           const div = document.createElement('div'); div.className = 'fila-partido';
           const r = p.estadoPartido === "JUGADO" ? `${p.golLocalReal} - ${p.golVisitaReal}` : "vs";
-          div.innerHTML = `<div class="equipo-col local">${p.equipoLocal} <img src="${p.urlBanderaLocal}" class="bandera-img" onerror="this.src='https://flagcdn.com/w80/un.png'"></div><div style="font-weight:900;">${r}</div><div class="equipo-col visita"><img src="${p.urlBanderaVisita}" class="bandera-img" onerror="this.src='https://flagcdn.com/w80/un.png'"> ${p.equipoVisita}</div>`;
+          div.innerHTML = `<div class="equipo-col local"><span>${escapeHtml(p.equipoLocal)}</span> <img src="${p.urlBanderaLocal}" class="bandera-img" onerror="this.src='https://flagcdn.com/w80/un.png'"></div><div style="font-weight:900;">${r}</div><div class="equipo-col visita"><img src="${p.urlBanderaVisita}" class="bandera-img" onerror="this.src='https://flagcdn.com/w80/un.png'"> <span>${escapeHtml(p.equipoVisita)}</span></div>`;
           container.appendChild(div);
         });
         showSpinner(false);
