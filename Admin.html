@@ -16,13 +16,15 @@
     .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: bold; color: white; }
     .btn-save { background: #10b981; }
     .btn-seed { background: #ef4444; margin-bottom: 20px; }
-    #status { margin-top: 10px; font-weight: bold; }
+    #status { margin-top: 10px; font-weight: bold; border-radius: 8px; padding: 10px; display: none; }
+    .status-ok { background: #d1fae5; color: #065f46; display: block !important; }
+    .status-err { background: #fee2e2; color: #991b1b; display: block !important; }
   </style>
 </head>
 <body>
   <div class="card">
     <h1>Panel de Administración ⚽</h1>
-    <p>Solo visible para: <?= Session.getEffectiveUser().getEmail() ?></p>
+    <p>Solo visible para el administrador.</p>
 
     <button class="btn btn-seed" onclick="seed()">Resetear Torneo (Seed)</button>
     <button class="btn btn-seed" style="background:#3b82f6" onclick="testData()">Insertar Datos Prueba</button>
@@ -33,41 +35,65 @@
   </div>
 
   <script>
+    function setStatus(msg, isErr) {
+      const el = document.getElementById('status');
+      el.innerText = msg;
+      el.className = isErr ? 'status-err' : 'status-ok';
+      setTimeout(() => { el.style.display = 'none'; }, 5000);
+    }
+
+    function handleFailure(err) {
+      setStatus("Error: " + (err.message || "Fallo en el servidor"), true);
+    }
+
     function seed() {
       if(!confirm("¿Borrar todos los datos y reiniciar el calendario?")) return;
-      document.getElementById('status').innerText = "Reseteando...";
-      google.script.run.withSuccessHandler(() => {
-        document.getElementById('status').innerText = "Torneo reseteado exitosamente.";
-        cargar();
-      }).seedPartidos();
+      document.getElementById('lista-admin').innerText = "Procesando...";
+      google.script.run
+        .withSuccessHandler(() => {
+          setStatus("Torneo reseteado exitosamente.", false);
+          cargar();
+        })
+        .withFailureHandler(handleFailure)
+        .seedPartidos();
     }
 
     function testData() {
-      google.script.run.withSuccessHandler(res => {
-        document.getElementById('status').innerText = res.message;
-        cargar();
-      }).insertarDatosPrueba();
+      google.script.run
+        .withSuccessHandler(res => {
+          setStatus(res.message, !res.success);
+          cargar();
+        })
+        .withFailureHandler(handleFailure)
+        .insertarDatosPrueba();
     }
 
     function cargar() {
-      google.script.run.withSuccessHandler(partidos => {
-        let h = `<table><tr><th>ID</th><th>Partido</th><th>Resultado</th><th>Acción</th></tr>`;
-        partidos.forEach(p => {
-          const resL = p.Gol_Local_Real !== "" ? p.Gol_Local_Real : "";
-          const resV = p.Gol_Visita_Real !== "" ? p.Gol_Visita_Real : "";
-          h += `<tr>
-            <td>${p.ID_Partido}</td>
-            <td>${p.Equipo_Local} vs ${p.Equipo_Visita}</td>
-            <td>
-              <input type="number" id="L-${p.ID_Partido}" value="${resL}"> -
-              <input type="number" id="V-${p.ID_Partido}" value="${resV}">
-            </td>
-            <td><button class="btn btn-save" onclick="guardar('${p.ID_Partido}')">Guardar</button></td>
-          </tr>`;
-        });
-        h += `</table>`;
-        document.getElementById('lista-admin').innerHTML = h;
-      }).obtenerPartidos();
+      google.script.run
+        .withSuccessHandler(partidos => {
+          if(!partidos || partidos.length === 0) {
+            document.getElementById('lista-admin').innerHTML = "No hay partidos. Ejecuta 'Seed'.";
+            return;
+          }
+          let h = `<table><tr><th>ID</th><th>Partido</th><th>Resultado</th><th>Acción</th></tr>`;
+          partidos.forEach(p => {
+            const resL = p.golLocalReal !== null ? p.golLocalReal : "";
+            const resV = p.golVisitaReal !== null ? p.golVisitaReal : "";
+            h += `<tr>
+              <td>${p.idPartido}</td>
+              <td>${p.equipoLocal} vs ${p.equipoVisita}</td>
+              <td>
+                <input type="number" id="L-${p.idPartido}" value="${resL}"> -
+                <input type="number" id="V-${p.idPartido}" value="${resV}">
+              </td>
+              <td><button class="btn btn-save" onclick="guardar('${p.idPartido}')">Guardar</button></td>
+            </tr>`;
+          });
+          h += `</table>`;
+          document.getElementById('lista-admin').innerHTML = h;
+        })
+        .withFailureHandler(handleFailure)
+        .obtenerPartidos();
     }
 
     function guardar(id) {
@@ -75,10 +101,13 @@
       const gv = document.getElementById('V-'+id).value;
       if(gl === "" || gv === "") return alert("Ingresa ambos goles");
 
-      google.script.run.withSuccessHandler(res => {
-        document.getElementById('status').innerText = res.message;
-        if(res.success) cargar();
-      }).actualizarResultadoManual(id, parseInt(gl), parseInt(gv));
+      google.script.run
+        .withSuccessHandler(res => {
+          setStatus(res.message || "Resultado guardado", !res.success);
+          if(res.success) cargar();
+        })
+        .withFailureHandler(handleFailure)
+        .actualizarResultadoManual(id, parseInt(gl), parseInt(gv));
     }
 
     window.onload = cargar;
