@@ -35,6 +35,7 @@
 
     /* Partidos Row */
     .fase-header { background: var(--dark); color: var(--secondary); border-left: 5px solid var(--secondary); padding: 12px; font-weight: bold; text-align: left; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
+    .grupo-header { background: #eceff1; padding: 8px 20px; font-weight: bold; font-size: 14px; color: var(--dark); border-bottom: 1px solid #cfd8dc; text-transform: uppercase; }
     .match-row { display: flex; align-items: center; padding: 15px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
     .match-row:nth-child(even) { background: var(--gris); }
     .team-side { display: flex; align-items: center; width: 35%; }
@@ -244,14 +245,25 @@
     const container = document.getElementById('lista-partidos-pronostico');
     container.innerHTML = '';
     let faseActual = '';
+    let grupoActual = '';
 
     PARTIDOS.forEach(p => {
       if (p.fase !== faseActual) {
         faseActual = p.fase;
+        grupoActual = ''; // Resetear grupo al cambiar de fase
         const h = document.createElement('div');
         h.className = 'fase-header';
         h.innerText = faseActual.toUpperCase();
         container.appendChild(h);
+      }
+
+      // Subdivisión por grupo en la Fase de Grupos
+      if (p.fase.toUpperCase().includes('GRUPO') && p.grupo && p.grupo !== grupoActual) {
+        grupoActual = p.grupo;
+        const gh = document.createElement('div');
+        gh.className = 'grupo-header';
+        gh.innerText = 'GRUPO ' + grupoActual;
+        container.appendChild(gh);
       }
 
       const pr = p.miPronostico || { golLocal: '', golVisita: '' };
