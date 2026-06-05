@@ -214,14 +214,14 @@ function obtenerPartidosParaUsuario(email) {
       };
     }).filter(function(p) { return p !== null; });
 
-    // Ordenar por Fase y luego por Grupo
+    // Ordenar por Fase y luego por Grupo, usando matchNum como desempate
     partidos.sort(function(a, b) {
       const fases = {"Fase de Grupos": 1, "Ronda de 32": 2, "Octavos de Final": 3, "Cuartos de Final": 4, "Semifinal": 5, "Final": 6};
       const fa = fases[a.fase] || 99;
       const fb = fases[b.fase] || 99;
       if (fa !== fb) return fa - fb;
-      if (a.grupo && b.grupo) return a.grupo.localeCompare(b.grupo);
-      return 0;
+      if (a.grupo && b.grupo && a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo);
+      return Number(a.matchNum || 0) - Number(b.matchNum || 0);
     });
 
     return { success: true, partidos: partidos, ahoraServidor: ahora.toISOString() };

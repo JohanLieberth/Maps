@@ -483,16 +483,10 @@
         if (!res.success) return container.innerHTML = 'Error';
         let html = '';
         let fA = '';
-        let gA = '';
         res.partidos.forEach(p => {
            if(p.fase !== fA) {
              fA = p.fase;
-             gA = '';
              html += `<div class="fase-header">${fA.toUpperCase()}</div>`;
-           }
-           if(p.fase.toUpperCase().includes('GRUPO') && p.grupo && p.grupo !== gA) {
-             gA = p.grupo;
-             html += `<div class="grupo-header">GRUPO ${gA}</div>`;
            }
            const gl = p.golLocalReal !== null ? p.golLocalReal : '-';
            const gv = p.golVisitaReal !== null ? p.golVisitaReal : '-';
