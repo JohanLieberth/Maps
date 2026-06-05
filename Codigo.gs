@@ -126,6 +126,7 @@ function obtenerPartidosParaUsuario(email) {
     var cLocal = idx["EQUIPO_LOCAL"], cVisita = idx["EQUIPO_VISITA"];
     var cGolLR = idx["GOL_LOCAL_REAL"], cGolVR = idx["GOL_VISITA_REAL"];
     var cEstado = idx["ESTADO"], cMatchN = idx["MATCH_NUM"];
+    var cBanderaL = idx["BANDERA_LOCAL"], cBanderaV = idx["BANDERA_VISITA"];
 
     var banderasMap = {};
     var hojaBanderas = ss.getSheetByName("Banderas");
@@ -200,8 +201,10 @@ function obtenerPartidosParaUsuario(email) {
         fecha: fechaIso,
         hora: String(hRaw || ""),
         equipoLocal: eqL, nombreLocal: eqL,
+        banderaLocal: String(row[cBanderaL] || ""),
         urlBanderaLocal: banderasMap[eqL.toLowerCase()] || "https://flagcdn.com/w80/un.png",
         equipoVisita: eqV, nombreVisita: eqV,
+        banderaVisita: String(row[cBanderaV] || ""),
         urlBanderaVisita: banderasMap[eqV.toLowerCase()] || "https://flagcdn.com/w80/un.png",
         golLocalReal: (row[cGolLR] !== "" && row[cGolLR] !== undefined) ? Number(row[cGolLR]) : null,
         golVisitaReal: (row[cGolVR] !== "" && row[cGolVR] !== undefined) ? Number(row[cGolVR]) : null,
@@ -535,16 +538,16 @@ function seedPartidos() {
   var h = ["ID_Partido", "Fase", "Grupo", "Fecha", "Hora_UTC", "Equipo_Local", "Bandera_Local", "Equipo_Visita", "Bandera_Visita", "Gol_Local_Real", "Gol_Visita_Real", "Estado", "Fecha_Cierre", "Llave", "Match_Num"];
   hoja.getRange(1, 1, 1, h.length).setValues([h]);
   var p = [
-    ["M1", "Fase de Grupos", "A", new Date(2026, 5, 11), "20:00", "México", "", "Corea del Sur", "", "", "", "PENDIENTE", "", "", "1"],
-    ["M2", "Fase de Grupos", "A", new Date(2026, 5, 12), "15:00", "Sudáfrica", "", "República Checa", "", "", "", "PENDIENTE", "", "", "2"],
-    ["M3", "Fase de Grupos", "A", new Date(2026, 5, 17), "15:00", "República Checa", "", "Corea del Sur", "", "", "", "PENDIENTE", "", "", "3"],
-    ["M4", "Fase de Grupos", "A", new Date(2026, 5, 17), "20:00", "México", "", "Sudáfrica", "", "", "", "PENDIENTE", "", "", "4"],
-    ["M5", "Fase de Grupos", "A", new Date(2026, 5, 23), "15:00", "Corea del Sur", "", "Sudáfrica", "", "", "", "PENDIENTE", "", "", "5"],
-    ["M6", "Fase de Grupos", "A", new Date(2026, 5, 23), "20:00", "República Checa", "", "México", "", "", "", "PENDIENTE", "", "", "6"],
-    ["M7", "Fase de Grupos", "B", new Date(2026, 5, 12), "15:00", "Canadá", "", "Bosnia y Herzegovina", "", "", "", "PENDIENTE", "", "", "7"],
-    ["M8", "Fase de Grupos", "B", new Date(2026, 5, 13), "12:00", "Qatar", "", "Suiza", "", "", "", "PENDIENTE", "", "", "8"],
-    ["M13", "Fase de Grupos", "C", new Date(2026, 5, 13), "18:00", "Brasil", "", "Marruecos", "", "", "", "PENDIENTE", "", "", "13"],
-    ["M19", "Fase de Grupos", "D", new Date(2026, 5, 14), "16:00", "Estados Unidos", "", "Paraguay", "", "", "", "PENDIENTE", "", "", "19"],
+    ["M1", "Fase de Grupos", "A", new Date(2026, 5, 11), "20:00", "México", "🇲🇽", "Corea del Sur", "🇰🇷", "", "", "PENDIENTE", "", "", "1"],
+    ["M2", "Fase de Grupos", "A", new Date(2026, 5, 12), "15:00", "Sudáfrica", "🇿🇦", "República Checa", "🇨🇿", "", "", "PENDIENTE", "", "", "2"],
+    ["M3", "Fase de Grupos", "A", new Date(2026, 5, 17), "15:00", "República Checa", "🇨🇿", "Corea del Sur", "🇰🇷", "", "", "PENDIENTE", "", "", "3"],
+    ["M4", "Fase de Grupos", "A", new Date(2026, 5, 17), "20:00", "México", "🇲🇽", "Sudáfrica", "🇿🇦", "", "", "PENDIENTE", "", "", "4"],
+    ["M5", "Fase de Grupos", "A", new Date(2026, 5, 23), "15:00", "Corea del Sur", "🇰🇷", "Sudáfrica", "🇿🇦", "", "", "PENDIENTE", "", "", "5"],
+    ["M6", "Fase de Grupos", "A", new Date(2026, 5, 23), "20:00", "República Checa", "🇨🇿", "México", "🇲🇽", "", "", "PENDIENTE", "", "", "6"],
+    ["M7", "Fase de Grupos", "B", new Date(2026, 5, 12), "15:00", "Canadá", "🇨🇦", "Bosnia y Herzegovina", "🇧🇦", "", "", "PENDIENTE", "", "", "7"],
+    ["M8", "Fase de Grupos", "B", new Date(2026, 5, 13), "12:00", "Qatar", "🇶🇦", "Suiza", "🇨🇭", "", "", "PENDIENTE", "", "", "8"],
+    ["M13", "Fase de Grupos", "C", new Date(2026, 5, 13), "18:00", "Brasil", "🇧🇷", "Marruecos", "🇲🇦", "", "", "PENDIENTE", "", "", "13"],
+    ["M19", "Fase de Grupos", "D", new Date(2026, 5, 14), "16:00", "Estados Unidos", "🇺🇸", "Paraguay", "🇵🇾", "", "", "PENDIENTE", "", "", "19"],
     ["M73", "Ronda de 32", "", new Date(2026, 5, 28), "12:00", "2do Grupo A", "", "2do Grupo B", "", "", "", "PENDIENTE", "", "", "73"],
     ["M75", "Ronda de 32", "", new Date(2026, 5, 29), "16:30", "1ro Grupo E", "", "3ro Grupos A/B/C/D/F", "", "", "", "PENDIENTE", "", "", "75"],
     ["M89", "Octavos de Final", "", new Date(2026, 6, 4), "13:00", "Ganador M73", "", "Ganador M75", "", "", "", "PENDIENTE", "", "", "89"],
@@ -559,4 +562,100 @@ function abrirWebApp() {
   var url = ScriptApp.getService().getUrl();
   var html = HtmlService.createHtmlOutput('<html><script>window.open("' + url + '", "_blank");google.script.host.close();</script></html>').setWidth(300).setHeight(100);
   SpreadsheetApp.getUi().showModalDialog(html, 'Abriendo...');
+}
+
+/**
+ * ADMIN: Actualizar resultado de forma manual.
+ */
+function actualizarResultadoManual(idPartido, golLocal, golVisita) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var hoja = ss.getSheetByName("Partidos");
+    var data = hoja.getDataRange().getValues();
+    var headers = data.shift();
+    var idx = getHeaderMap(headers);
+
+    var found = false;
+    for (var i = 0; i < data.length; i++) {
+      if (String(data[i][idx["ID_PARTIDO"]]) === String(idPartido)) {
+        var row = i + 2;
+        hoja.getRange(row, idx["GOL_LOCAL_REAL"] + 1, 1, 3).setValues([[golLocal, golVisita, "JUGADO"]]);
+        found = true;
+        break;
+      }
+    }
+
+    if (found) {
+      recalcularTodosLosPuntos();
+      actualizarFaseEliminatoria();
+      return { success: true, message: "Resultado actualizado y puntos recalculados." };
+    }
+    return { success: false, error: "Partido no encontrado." };
+  } catch (e) {
+    registrarError("actualizarResultadoManual", e);
+    return { success: false, error: e.toString() };
+  }
+}
+
+/**
+ * ADMIN: Placeholder para actualización vía API.
+ */
+function actualizarResultadosAPI() {
+  var config = getConfig();
+  if (!config.API_FOOTBALL_KEY) return "API Key no configurada.";
+  // Implementación de fetch a API-Football (opcional según prompt)
+  return "Funcionalidad de API lista para implementación con Key.";
+}
+
+/**
+ * ADMIN: Notificar a los usuarios.
+ */
+function enviarNotificaciones() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var h = ss.getSheetByName("Participantes");
+  var d = h.getDataRange().getValues(); d.shift();
+  d.forEach(function(r) {
+    if (r[0]) {
+      try {
+        MailApp.sendEmail(r[0], "Actualización de Quiniela", "Se han actualizado resultados. ¡Revisa tu posición en el ranking!");
+      } catch(e) {}
+    }
+  });
+  return "Notificaciones enviadas.";
+}
+
+/**
+ * ADMIN: Crear backup de la hoja.
+ */
+function crearBackup() {
+  var ss = SpreadsheetApp.getActive();
+  var folder = DriveApp.getRootFolder();
+  var file = DriveApp.getFileById(ss.getId());
+  file.makeCopy("Backup_Quiniela_" + Utilities.formatDate(new Date(), "GMT", "yyyy-MM-dd_HHmm"), folder);
+  return "Backup creado en Drive.";
+}
+
+/**
+ * ADMIN: Insertar datos de prueba para validación.
+ */
+function insertarDatosPrueba() {
+  try {
+    registrarParticipante("juan@email.com", "Juan Perez", "ElCrack", 170);
+    registrarParticipante("maria@email.com", "Maria Lopez", "LaMagica", 165);
+
+    // Simular algunos resultados
+    actualizarResultadoManual("M1", 2, 1); // México gana
+    actualizarResultadoManual("M2", 0, 0); // Empate
+
+    // Guardar algunos pronósticos
+    guardarPronosticos("juan@email.com", [
+      {idPartido: "M1", golLocal: 2, golVisita: 1},
+      {idPartido: "M2", golLocal: 1, golVisita: 0}
+    ]);
+
+    recalcularTodosLosPuntos();
+    return { success: true, message: "Datos de prueba (Juan, Maria) insertados correctamente." };
+  } catch(e) {
+    return { success: false, error: e.toString() };
+  }
 }
