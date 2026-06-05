@@ -177,11 +177,27 @@ function obtenerPartidosParaUsuario(email) {
         inpH = false; if (estP === "ABIERTO") estP = "ESPERANDO";
       }
 
+      var fechaIso = "";
+      try {
+        if (fDt && !isNaN(fDt.getTime())) {
+          fechaIso = fDt.toISOString().split('T')[0];
+        } else {
+          fechaIso = String(fRaw || "");
+        }
+      } catch(e) { fechaIso = String(fRaw || ""); }
+
+      var cierreIso = null;
+      try {
+        if (fCierre && !isNaN(fCierre.getTime())) {
+          cierreIso = fCierre.toISOString();
+        }
+      } catch(e) { cierreIso = null; }
+
       return {
         idPartido: id,
         fase: String(row[cFase] || ""),
         grupo: String(row[cGrupo] || ""),
-        fecha: fDt ? fDt.toISOString().split('T')[0] : String(fRaw),
+        fecha: fechaIso,
         hora: String(hRaw || ""),
         equipoLocal: eqL, nombreLocal: eqL,
         urlBanderaLocal: banderasMap[eqL.toLowerCase()] || "https://flagcdn.com/w80/un.png",
@@ -192,7 +208,7 @@ function obtenerPartidosParaUsuario(email) {
         estadoPartido: estS,
         estadoPronostico: estP,
         inputsHabilitados: inpH,
-        fechaCierre: fCierre ? fCierre.toISOString() : null,
+        fechaCierre: cierreIso,
         miPronostico: pronosUsr[id] || null,
         matchNum: String(row[cMatchN] || "")
       };
