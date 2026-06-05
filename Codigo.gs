@@ -345,7 +345,7 @@ function propagarGanadoresBracket(ss, idx) {
 
 // --- USUARIOS Y LOGIN ---
 
-function registrarParticipante(e, n, a) {
+function registrarParticipante(e, n, a, g) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Participantes");
@@ -354,7 +354,7 @@ function registrarParticipante(e, n, a) {
     var eL = String(e || "").toLowerCase(), aL = String(a || "").toLowerCase();
     if (data.some(function(r) { return String(r[0]).toLowerCase() === eL; })) return { success: false, error: "Email ya registrado" };
     if (data.some(function(r) { return String(r[2]).toLowerCase() === aL; })) return { success: false, error: "Alias ya existe" };
-    sheet.appendRow([e, n, a, 0, 0, 0, 0, new Date()]);
+    sheet.appendRow([e, n, a, 0, 0, 0, 0, new Date(), g, "", "Pendiente"]);
     return { success: true };
   } catch(err) { return { success: false, error: err.toString() }; }
 }
@@ -368,10 +368,36 @@ function loginParticipante(email) {
     var mB = String(email || "").toLowerCase();
     var u = d.find(function(r) { return String(r[0]).toLowerCase() === mB; });
     if(u) {
-       return { success: true, participante: { email: u[0], nombre: u[1], alias: u[2], puntosTotales: u[3], aciertosExactos: u[4] } };
+       return { success: true, participante: { email: u[0], nombre: u[1], alias: u[2], puntosTotales: u[3], aciertosExactos: u[4], estatusPago: u[10] || "Pendiente" } };
     }
     return { success: false, error: "Usuario no encontrado" };
   } catch(e) { return { success: false, error: e.toString() }; }
+}
+
+function subirComprobante(email, fileObj) {
+  try {
+    var folderName = "Comprobantes_Quiniela_2026";
+    var folders = DriveApp.getFoldersByName(folderName);
+    var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+
+    var contentType = fileObj.contentType;
+    var data = Utilities.base64Decode(fileObj.data);
+    var blob = Utilities.newBlob(data, contentType, "Pago_" + email + "_" + new Date().getTime());
+    var file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = ss.getSheetByName("Participantes");
+    var d = sheet.getDataRange().getValues();
+    var mB = String(email).toLowerCase();
+    for (var i = 1; i < d.length; i++) {
+      if (String(d[i][0]).toLowerCase() === mB) {
+        sheet.getRange(i + 1, 10, 1, 2).setValues([[file.getUrl(), "En Revisión"]]);
+        break;
+      }
+    }
+    return { success: true, url: file.getUrl() };
+  } catch (e) { return { success: false, error: e.toString() }; }
 }
 
 function obtenerParticipante(email) {
@@ -382,7 +408,7 @@ function obtenerParticipante(email) {
     var d = h.getDataRange().getValues();
     var mB = String(email || "").toLowerCase();
     var u = d.find(function(r) { return String(r[0]).toLowerCase() === mB; });
-    return u ? { Email: u[0], Nombre: u[1], Alias: u[2], Puntos_Totales: u[3], Aciertos_Exactos: u[4] } : null;
+    return u ? { Email: u[0], Nombre: u[1], Alias: u[2], Puntos_Totales: u[3], Aciertos_Exactos: u[4], EstatusPago: u[10] } : null;
   } catch(e) { return null; }
 }
 
@@ -470,7 +496,7 @@ function registrarError(f, e) {
 
 function inicializarSistema() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var h = [{ n: 'Configuracion', col: ['Parametro', 'Valor'] }, { n: 'Banderas', col: ['Nombre_Equipo', 'Codigo_ISO', 'URL_Bandera'] }, { n: 'Partidos', col: ["ID_Partido", "Fase", "Grupo", "Fecha", "Hora_UTC", "Equipo_Local", "Bandera_Local", "Equipo_Visita", "Bandera_Visita", "Gol_Local_Real", "Gol_Visita_Real", "Estado", "Fecha_Cierre", "Llave", "Match_Num"] }, { n: 'Participantes', col: ['Email', 'Nombre', 'Alias', 'Puntos_Totales', 'Aciertos_Exactos', 'Aciertos_Ganador', 'Errores', 'Fecha_Registro'] }, { n: 'Pronosticos', col: ['ID_Pronostico', 'Email_Participante', 'ID_Partido', 'Gol_Local', 'Gol_Visita', 'Fecha_Registro', 'Puntos_Obtenidos', 'Calculado'] }, { n: 'Log_Errores', col: ['Fecha', 'Funcion', 'Error', 'Detalle'] }];
+  var h = [{ n: 'Configuracion', col: ['Parametro', 'Valor'] }, { n: 'Banderas', col: ['Nombre_Equipo', 'Codigo_ISO', 'URL_Bandera'] }, { n: 'Partidos', col: ["ID_Partido", "Fase", "Grupo", "Fecha", "Hora_UTC", "Equipo_Local", "Bandera_Local", "Equipo_Visita", "Bandera_Visita", "Gol_Local_Real", "Gol_Visita_Real", "Estado", "Fecha_Cierre", "Llave", "Match_Num"] }, { n: 'Participantes', col: ['Email', 'Nombre', 'Alias', 'Puntos_Totales', 'Aciertos_Exactos', 'Aciertos_Ganador', 'Errores', 'Fecha_Registro', 'Goles_Torneo_Pronostico', 'Comprobante_Pago_URL', 'Estatus_Pago'] }, { n: 'Pronosticos', col: ['ID_Pronostico', 'Email_Participante', 'ID_Partido', 'Gol_Local', 'Gol_Visita', 'Fecha_Registro', 'Puntos_Obtenidos', 'Calculado'] }, { n: 'Log_Errores', col: ['Fecha', 'Funcion', 'Error', 'Detalle'] }];
   h.forEach(function(x) { if(!ss.getSheetByName(x.n)){ var s = ss.insertSheet(x.n); s.appendRow(x.col); } });
   var cS = ss.getSheetByName('Configuracion');
   if (cS.getLastRow() === 1) {

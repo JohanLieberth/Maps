@@ -71,6 +71,12 @@
     .spinner { width: 50px; height: 50px; border: 5px solid #f3f3f3; border-top: 5px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+    /* Modal Reglamento */
+    #modal-reglamento { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .modal-content { background: white; padding: 25px; border-radius: 15px; max-width: 500px; max-height: 80vh; overflow-y: auto; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+    .modal-content h3 { color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 10px; margin-top: 0; }
+    .regla-item { margin: 15px 0; font-size: 14px; line-height: 1.5; }
+
     @media (max-width: 600px) {
       .team-name { font-size: 12px; margin: 0 5px; }
       .flag { width: 30px; height: 18px; }
@@ -108,8 +114,45 @@
     <input type="email" id="reg-email" class="form-control" placeholder="Email">
     <input type="text" id="reg-nombre" class="form-control" placeholder="Nombre completo">
     <input type="text" id="reg-alias" class="form-control" placeholder="Alias (max 15 car.)" maxlength="15">
+    <div style="margin: 10px 0; text-align: left; font-size: 12px; color: #666;">
+      <strong>Pregunta Rompecorazones:</strong><br>
+      ¿Cuántos goles totales crees que se anotarán en el torneo?
+    </div>
+    <input type="number" id="reg-goles" class="form-control" placeholder="Total de goles (ej. 171)">
     <button class="btn btn-primary" onclick="registrar()">Registrarme</button>
     <button class="btn" style="background: #eee" onclick="switchView('view-login')">Volver</button>
+  </div>
+</div>
+
+<!-- Modal Reglamento -->
+<div id="modal-reglamento">
+  <div class="modal-content">
+    <h3>🏆 REGLAMENTO DE LA QUINIELA 🏆</h3>
+    <div class="regla-item">
+      <strong>💰 Costo de inscripción:</strong> $250 MXN (Premio único al 1er lugar: 80% de lo recaudado).
+    </div>
+    <div class="regla-item">
+      <strong>📊 Sistema de Puntuación:</strong><br>
+      • Marcador Exacto: +5 puntos<br>
+      • Acertar Ganador / Empate: +2 puntos<br>
+      • Error en el pronóstico: -1 punto<br>
+      • Bonus Fase Eliminatoria: +3 puntos
+    </div>
+    <div class="regla-item">
+      <strong>⚖️ Criterio de Desempate:</strong><br>
+      1. Más marcadores exactos.<br>
+      2. Más ganadores/empates acertados.<br>
+      3. Menos errores de pronóstico.<br>
+      4. Más cerca del total de goles real del torneo.
+    </div>
+    <div class="regla-item" style="background: #f1f8e9; padding: 10px; border-radius: 8px; border: 1px solid #c5e1a5;">
+      <strong>🏦 Datos de Pago:</strong><br>
+      Banco: <strong>INVEX</strong><br>
+      CLABE: <code>059180131318072007</code><br>
+      Concepto: Quiniela<br>
+      Monto: $250.00 MXN
+    </div>
+    <button class="btn btn-primary" onclick="cerrarReglamento()">ENTENDIDO Y ACEPTAR</button>
   </div>
 </div>
 
@@ -117,6 +160,7 @@
   <div class="nav-tabs">
     <div class="nav-tab active" onclick="tab('pronosticos', this)">Mis Pronósticos</div>
     <div class="nav-tab" onclick="tab('ranking', this)">Ranking</div>
+    <div class="nav-tab" onclick="tab('pago', this)">Mi Pago</div>
     <div class="nav-tab" onclick="tab('resultados', this)">Resultados</div>
     <div class="nav-tab" onclick="cerrarSesion()">Salir</div>
   </div>
@@ -142,6 +186,22 @@
     <div id="tab-resultados" class="tab-content" style="display: none;">
       <div id="lista-resultados"></div>
     </div>
+
+    <!-- Vista Pago -->
+    <div id="tab-pago" class="tab-content" style="display: none; padding: 20px;">
+      <h3>Gestión de Pago</h3>
+      <div class="auth-card" style="margin: 20px 0; max-width: 100%;">
+        <p>Estatus de tu pago: <strong id="pago-status-text">Cargando...</strong></p>
+        <hr>
+        <p style="font-size: 14px; color: #666;">Si ya realizaste tu depósito de <strong>$250.00 MXN</strong>, sube tu comprobante aquí:</p>
+        <input type="file" id="pago-file" class="form-control" accept="image/*,application/pdf">
+        <button class="btn btn-primary" onclick="subirPago()">Subir Comprobante</button>
+      </div>
+      <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; font-size: 13px;">
+        <strong>Recordatorio de Datos:</strong><br>
+        Banco: INVEX | CLABE: 059180131318072007 | Concepto: Quiniela
+      </div>
+    </div>
   </div>
 </div>
 
@@ -156,8 +216,17 @@
       document.getElementById('user-alias').innerText = USUARIO.alias;
       switchView('main-app');
       cargarPartidos();
+      mostrarReglamento();
     }
   };
+
+  function mostrarReglamento() {
+    document.getElementById('modal-reglamento').style.display = 'flex';
+  }
+
+  function cerrarReglamento() {
+    document.getElementById('modal-reglamento').style.display = 'none';
+  }
 
   function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
 
@@ -174,6 +243,45 @@
     document.getElementById('tab-' + id).style.display = 'block';
     if(id === 'ranking') cargarRanking();
     if(id === 'resultados') cargarResultados();
+    if(id === 'pago') actualizarVistaPago();
+  }
+
+  function actualizarVistaPago() {
+    if(!USUARIO) return;
+    document.getElementById('pago-status-text').innerText = USUARIO.estatusPago || "Pendiente";
+  }
+
+  function subirPago() {
+    const fileInput = document.getElementById('pago-file');
+    if (fileInput.files.length === 0) return alert('Selecciona un archivo');
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    showLoader(true);
+    reader.onload = function(e) {
+      const fileData = {
+        data: e.target.result.split(',')[1],
+        contentType: file.type,
+        name: file.name
+      };
+
+      google.script.run
+        .withSuccessHandler(res => {
+          showLoader(false);
+          if (res.success) {
+            alert('Comprobante enviado correctamente. Entrará en revisión.');
+            USUARIO.estatusPago = "En Revisión";
+            localStorage.setItem('quiniela2026_user', JSON.stringify(USUARIO));
+            actualizarVistaPago();
+          } else {
+            alert('Error: ' + res.error);
+          }
+        })
+        .withFailureHandler(err => { showLoader(false); alert('Error al subir archivo'); })
+        .subirComprobante(USUARIO.email, fileData);
+    };
+    reader.readAsDataURL(file);
   }
 
   function login() {
@@ -189,6 +297,7 @@
           document.getElementById('user-alias').innerText = USUARIO.alias;
           switchView('main-app');
           cargarPartidos();
+          mostrarReglamento();
         } else {
           alert(res.error);
         }
@@ -201,7 +310,8 @@
     const email = document.getElementById('reg-email').value;
     const nombre = document.getElementById('reg-nombre').value;
     const alias = document.getElementById('reg-alias').value;
-    if (!email || !nombre || !alias) return alert('Completa todos los campos');
+    const goles = document.getElementById('reg-goles').value;
+    if (!email || !nombre || !alias || !goles) return alert('Completa todos los campos, incluyendo los goles estimados.');
     showLoader(true);
     google.script.run
       .withSuccessHandler(res => {
@@ -214,7 +324,7 @@
         }
       })
       .withFailureHandler(err => { showLoader(false); alert('Error de conexión'); })
-      .registrarParticipante(email, nombre, alias);
+      .registrarParticipante(email, nombre, alias, goles);
   }
 
   function cargarPartidos() {
