@@ -34,7 +34,12 @@
         },
         obtenerPartidosParaUsuario: function(email) {
           console.log("Mock: obtenerPartidosParaUsuario", email);
-          setTimeout(() => { if (this.successHandler) this.successHandler({ success: true, partidos: [] }); }, 500);
+          const mockPartidos = [
+            { idPartido: "M1", fase: "Fase de Grupos", grupo: "A", nombreLocal: "México", nombreVisita: "Sudáfrica", urlBanderaLocal: "https://flagcdn.com/w80/mx.png", urlBanderaVisita: "https://flagcdn.com/w80/za.png", inputsHabilitados: true, estadoPronostico: "ABIERTO", golLocalReal: null, golVisitaReal: null, miPronostico: null },
+            { idPartido: "M2", fase: "Fase de Grupos", grupo: "A", nombreLocal: "Corea del Sur", nombreVisita: "República Checa", urlBanderaLocal: "https://flagcdn.com/w80/kr.png", urlBanderaVisita: "https://flagcdn.com/w80/cz.png", inputsHabilitados: true, estadoPronostico: "ABIERTO", golLocalReal: null, golVisitaReal: null, miPronostico: null },
+            { idPartido: "M7", fase: "Fase de Grupos", grupo: "B", nombreLocal: "Canadá", nombreVisita: "Suiza", urlBanderaLocal: "https://flagcdn.com/w80/ca.png", urlBanderaVisita: "https://flagcdn.com/w80/ch.png", inputsHabilitados: true, estadoPronostico: "ABIERTO", golLocalReal: null, golVisitaReal: null, miPronostico: null }
+          ];
+          setTimeout(() => { if (this.successHandler) this.successHandler({ success: true, partidos: mockPartidos }); }, 500);
         },
         obtenerRanking: function() {
           console.log("Mock: obtenerRanking");

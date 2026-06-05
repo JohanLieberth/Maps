@@ -484,15 +484,38 @@
         if (!res.success) return container.innerHTML = 'Error';
         let html = '';
         let fA = '';
+        let gA = '';
         res.partidos.forEach(p => {
-           if(p.fase !== fA) { fA = p.fase; html += `<div class="fase-header">${fA.toUpperCase()}</div>`; }
+           if(p.fase !== fA) {
+             fA = p.fase;
+             gA = '';
+             html += `<div class="fase-header">${fA.toUpperCase()}</div>`;
+           }
+           if(p.fase.toUpperCase().includes('GRUPO') && p.grupo && p.grupo !== gA) {
+             gA = p.grupo;
+             html += `<div class="grupo-header">GRUPO ${gA}</div>`;
+           }
            const gl = p.golLocalReal !== null ? p.golLocalReal : '-';
            const gv = p.golVisitaReal !== null ? p.golVisitaReal : '-';
-           const mi = p.miPronostico ? ` (Mi: ${p.miPronostico.golLocal}-${p.miPronostico.golVisita})` : '';
-           html += `<div class="match-row" style="justify-content: center;">
-             <span>${p.nombreLocal} <b>${gl} - ${gv}</b> ${p.nombreVisita}</span>
-             <small style="margin-left:10px; color:#666">${mi}</small>
-           </div>`;
+           const mi = p.miPronostico ? `<div style="font-size: 11px; color: #666; margin-top: 2px;">Mi pronóstico: ${p.miPronostico.golLocal} - ${p.miPronostico.golVisita}</div>` : '';
+
+           html += `
+             <div class="match-row" style="flex-direction: column; align-items: center; padding: 15px 0;">
+               <div style="display: flex; width: 100%; align-items: center; justify-content: center;">
+                 <div class="team-side local" style="width: 40%">
+                   <img src="${p.urlBanderaLocal}" class="flag" onerror="this.src='https://flagcdn.com/w80/un.png'">
+                   <span class="team-name" style="font-size: 14px">${p.nombreLocal}</span>
+                 </div>
+                 <div class="score-center" style="width: 20%; font-size: 18px;">
+                   <b>${gl} - ${gv}</b>
+                 </div>
+                 <div class="team-side visita" style="width: 40%">
+                   <span class="team-name" style="font-size: 14px">${p.nombreVisita}</span>
+                   <img src="${p.urlBanderaVisita}" class="flag" onerror="this.src='https://flagcdn.com/w80/un.png'">
+                 </div>
+               </div>
+               ${mi}
+             </div>`;
         });
         container.innerHTML = html;
       })
