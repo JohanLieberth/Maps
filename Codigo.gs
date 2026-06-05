@@ -72,8 +72,6 @@ function onOpen() {
     .addSeparator()
     .addItem('🧪 Inicializar / Resetear Sistema', 'inicializarSistemaCompleto')
     .addItem('🧪 Insertar Datos de Prueba', 'insertarDatosPrueba')
-    .addSeparator()
-    .addItem('🔍 Probar Lectura de Sheets', 'testLecturaSheet')
     .addToUi();
 }
 
@@ -354,7 +352,7 @@ function registrarParticipante(e, n, a, g) {
     var eL = String(e || "").toLowerCase(), aL = String(a || "").toLowerCase();
     if (data.some(function(r) { return String(r[0]).toLowerCase() === eL; })) return { success: false, error: "Email ya registrado" };
     if (data.some(function(r) { return String(r[2]).toLowerCase() === aL; })) return { success: false, error: "Alias ya existe" };
-    sheet.appendRow([e, n, a, 0, 0, 0, 0, new Date(), g, "", "Pendiente"]);
+    sheet.appendRow([e, n, a, 0, 0, 0, 0, new Date(), g, "", "Pendiente", ""]);
     return { success: true };
   } catch(err) { return { success: false, error: err.toString() }; }
 }
@@ -368,7 +366,10 @@ function loginParticipante(email) {
     var mB = String(email || "").toLowerCase();
     var u = d.find(function(r) { return String(r[0]).toLowerCase() === mB; });
     if(u) {
-       return { success: true, participante: { email: u[0], nombre: u[1], alias: u[2], puntosTotales: u[3], aciertosExactos: u[4], estatusPago: u[10] || "Pendiente" } };
+       return { success: true, participante: {
+         email: u[0], nombre: u[1], alias: u[2], puntosTotales: u[3], aciertosExactos: u[4],
+         estatusPago: u[10] || "Pendiente", comentarioPago: u[11] || ""
+       } };
     }
     return { success: false, error: "Usuario no encontrado" };
   } catch(e) { return { success: false, error: e.toString() }; }
@@ -379,10 +380,7 @@ function subirComprobante(email, fileObj) {
     var folderName = "Comprobantes_Quiniela_2026";
     var folders = DriveApp.getFoldersByName(folderName);
     var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
-
-    var contentType = fileObj.contentType;
-    var data = Utilities.base64Decode(fileObj.data);
-    var blob = Utilities.newBlob(data, contentType, "Pago_" + email + "_" + new Date().getTime());
+    var blob = Utilities.newBlob(Utilities.base64Decode(fileObj.data), fileObj.contentType, "Pago_" + email + "_" + new Date().getTime());
     var file = folder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
 
@@ -392,7 +390,12 @@ function subirComprobante(email, fileObj) {
     var mB = String(email).toLowerCase();
     for (var i = 1; i < d.length; i++) {
       if (String(d[i][0]).toLowerCase() === mB) {
-        sheet.getRange(i + 1, 10, 1, 2).setValues([[file.getUrl(), "En Revisión"]]);
+        sheet.getRange(i + 1, 10, 1, 2).setValues([["En revisión", ""]]); // Limpiar comentario al resubir
+        // Corrección: El ID de la columna 10 es Comprobante_Pago_URL (Índice 9 en 0-based, J en Sheets)
+        // Columna 10: Comprobante_Pago_URL (J)
+        // Columna 11: Estatus_Pago (K)
+        // Columna 12: Comentarios_Pago (L)
+        sheet.getRange(i + 1, 10, 1, 3).setValues([[file.getUrl(), "En revisión", ""]]);
         break;
       }
     }
@@ -408,7 +411,7 @@ function obtenerParticipante(email) {
     var d = h.getDataRange().getValues();
     var mB = String(email || "").toLowerCase();
     var u = d.find(function(r) { return String(r[0]).toLowerCase() === mB; });
-    return u ? { Email: u[0], Nombre: u[1], Alias: u[2], Puntos_Totales: u[3], Aciertos_Exactos: u[4], EstatusPago: u[10] } : null;
+    return u ? { Email: u[0], Nombre: u[1], Alias: u[2], Puntos_Totales: u[3], Aciertos_Exactos: u[4], EstatusPago: u[10], ComentarioPago: u[11] } : null;
   } catch(e) { return null; }
 }
 
@@ -425,34 +428,22 @@ function obtenerRanking() {
 function guardarPronosticos(email, pronArr) {
   try {
     var ss = SpreadsheetApp.getActiveSpreadsheet();
-    var hPart = ss.getSheetByName("Partidos");
     var hPronos = ss.getSheetByName("Pronosticos");
-    if (!hPronos) { ss.insertSheet("Pronosticos").appendRow(['ID_PRONOSTICO', 'EMAIL_PARTICIPANTE', 'ID_PARTIDO', 'GOL_LOCAL', 'GOL_VISITA', 'FECHA_REGISTRO', 'PUNTOS_OBTENIDOS', 'CALCULADO']); hPronos = ss.getSheetByName("Pronosticos"); }
-
-    var pD = hPart.getDataRange().getValues();
-    var hHead = pD.shift();
-    var idxP = getHeaderMap(hHead);
-
-    var ahora = new Date();
+    if (!hPronos) {
+       ss.insertSheet("Pronosticos").appendRow(['ID_PRONOSTICO', 'EMAIL_PARTICIPANTE', 'ID_PARTIDO', 'GOL_LOCAL', 'GOL_VISITA', 'FECHA_REGISTRO', 'PUNTOS_OBTENIDOS', 'CALCULADO']);
+       hPronos = ss.getSheetByName("Pronosticos");
+    }
     var userPronos = hPronos.getDataRange().getValues();
     var userMap = {};
     var mailL = String(email || "").toLowerCase();
     for (var i = 1; i < userPronos.length; i++) { if (String(userPronos[i][1]).toLowerCase() === mailL) userMap[String(userPronos[i][2])] = i + 1; }
 
-    var guardados = 0;
     pronArr.forEach(function(p) {
-      var match = pD.find(function(m) { return String(m[idxP["ID_PARTIDO"]]) == String(p.idPartido); });
-      if (!match || String(match[idxP["ESTADO"]]).toUpperCase() === 'JUGADO') return;
-      var dt = new Date(match[idxP["FECHA"]]);
-      if (match[idxP["HORA_UTC"]]) { var ph = String(match[idxP["HORA_UTC"]]).split(":"); dt.setHours(parseInt(ph[0]), parseInt(ph[1]), 0, 0); }
-      if (ahora >= new Date(dt.getTime() - 24*60*60*1000)) return;
-      var gl = Number(p.golLocal), gv = Number(p.golVisita);
-      if (userMap[p.idPartido]) { hPronos.getRange(userMap[p.idPartido], 4, 1, 3).setValues([[gl, gv, new Date()]]); }
-      else { hPronos.appendRow(["PR_" + Utilities.getUuid().substring(0,8), email, p.idPartido, gl, gv, new Date(), "", false]); }
-      guardados++;
+      if (userMap[p.idPartido]) hPronos.getRange(userMap[p.idPartido], 4, 1, 2).setValues([[Number(p.golLocal), Number(p.golVisita)]]);
+      else hPronos.appendRow(["PR_" + Utilities.getUuid().substring(0,8), email, p.idPartido, Number(p.golLocal), Number(p.golVisita), new Date(), "", false]);
     });
-    return { success: true, guardados: guardados };
-  } catch (e) { registrarError("guardarPronosticos", e); return { success: false, error: e.toString() }; }
+    return { success: true, guardados: pronArr.length };
+  } catch (e) { return { success: false, error: e.toString() }; }
 }
 
 // --- ADMIN Y INICIALIZACION ---
@@ -460,31 +451,9 @@ function guardarPronosticos(email, pronArr) {
 function inicializarSistemaCompleto() {
   inicializarSistema();
   seedEquipos();
+  seedBanderas();
   seedPartidos();
   return "Sistema inicializado correctamente.";
-}
-
-function seedEquipos() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var hoja = ss.getSheetByName("Equipos"); if (!hoja) hoja = ss.insertSheet("Equipos");
-  hoja.clear();
-  var d = [["ID_Equipo", "Nombre_Equipo", "Bandera", "Grupo"]];
-  var teams = [
-    [1, "México", "🇲🇽", "A"], [2, "Sudáfrica", "🇿🇦", "A"], [3, "Corea del Sur", "🇰🇷", "A"], [4, "República Checa", "🇨🇿", "A"],
-    [5, "Canadá", "🇨🇦", "B"], [6, "Bosnia y Herzegovina", "🇧🇦", "B"], [7, "Qatar", "🇶🇦", "B"], [8, "Suiza", "🇨🇭", "B"],
-    [9, "Brasil", "🇧🇷", "C"], [10, "Marruecos", "🇲🇦", "C"], [11, "Haití", "🇭🇹", "C"], [12, "Escocia", "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "C"],
-    [13, "Estados Unidos", "🇺🇸", "D"], [14, "Paraguay", "🇵🇾", "D"], [15, "Australia", "🇦🇺", "D"], [16, "Turquía", "🇹🇷", "D"],
-    [17, "Alemania", "🇩🇪", "E"], [18, "Curazao", "🇨🇼", "E"], [19, "Costa de Marfil", "🇨🇮", "E"], [20, "Ecuador", "🇪🇨", "E"],
-    [21, "Países Bajos", "🇳🇱", "F"], [22, "Japón", "🇯🇵", "F"], [23, "Suecia", "🇸🇪", "F"], [24, "Túnez", "🇹🇳", "F"],
-    [25, "Bélgica", "🇧🇪", "G"], [26, "Egipto", "🇪🇬", "G"], [27, "Irán", "🇮🇷", "G"], [28, "Nueva Zelanda", "🇳🇿", "G"],
-    [29, "España", "🇪🇸", "H"], [30, "Cabo Verde", "🇨🇻", "H"], [31, "Arabia Saudita", "🇸🇦", "H"], [32, "Uruguay", "🇺🇾", "H"],
-    [33, "Francia", "🇫🇷", "I"], [34, "Senegal", "🇸🇳", "I"], [35, "Irak", "🇮🇶", "I"], [36, "Noruega", "🇳🇴", "I"],
-    [37, "Argentina", "🇦🇷", "J"], [38, "Argelia", "🇩🇿", "J"], [39, "Austria", "🇦🇹", "J"], [40, "Jordania", "🇯🇴", "J"],
-    [41, "Portugal", "🇵🇹", "K"], [42, "RD Congo", "🇨🇩", "K"], [43, "Uzbekistán", "🇺🇿", "K"], [44, "Colombia", "🇨🇴", "K"],
-    [45, "Inglaterra", "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "L"], [46, "Croacia", "🇭🇷", "L"], [47, "Ghana", "🇬🇭", "L"], [48, "Panamá", "🇵🇦", "L"]
-  ];
-  teams.forEach(function(t) { d.push(t); });
-  hoja.getRange(1, 1, d.length, 4).setValues(d);
 }
 
 function registrarError(f, e) {
@@ -496,13 +465,31 @@ function registrarError(f, e) {
 
 function inicializarSistema() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var h = [{ n: 'Configuracion', col: ['Parametro', 'Valor'] }, { n: 'Banderas', col: ['Nombre_Equipo', 'Codigo_ISO', 'URL_Bandera'] }, { n: 'Partidos', col: ["ID_Partido", "Fase", "Grupo", "Fecha", "Hora_UTC", "Equipo_Local", "Bandera_Local", "Equipo_Visita", "Bandera_Visita", "Gol_Local_Real", "Gol_Visita_Real", "Estado", "Fecha_Cierre", "Llave", "Match_Num"] }, { n: 'Participantes', col: ['Email', 'Nombre', 'Alias', 'Puntos_Totales', 'Aciertos_Exactos', 'Aciertos_Ganador', 'Errores', 'Fecha_Registro', 'Goles_Torneo_Pronostico', 'Comprobante_Pago_URL', 'Estatus_Pago'] }, { n: 'Pronosticos', col: ['ID_Pronostico', 'Email_Participante', 'ID_Partido', 'Gol_Local', 'Gol_Visita', 'Fecha_Registro', 'Puntos_Obtenidos', 'Calculado'] }, { n: 'Log_Errores', col: ['Fecha', 'Funcion', 'Error', 'Detalle'] }];
+  var h = [
+    { n: 'Configuracion', col: ['Parametro', 'Valor'] },
+    { n: 'Banderas', col: ['Nombre_Equipo', 'Codigo_ISO', 'URL_Bandera'] },
+    { n: 'Equipos', col: ["ID_Equipo", "Nombre_Equipo", "Bandera", "Grupo"] },
+    { n: 'Partidos', col: ["ID_Partido", "Fase", "Grupo", "Fecha", "Hora_UTC", "Equipo_Local", "Bandera_Local", "Equipo_Visita", "Bandera_Visita", "Gol_Local_Real", "Gol_Visita_Real", "Estado", "Fecha_Cierre", "Llave", "Match_Num"] },
+    { n: 'Participantes', col: ['Email', 'Nombre', 'Alias', 'Puntos_Totales', 'Aciertos_Exactos', 'Aciertos_Ganador', 'Errores', 'Fecha_Registro', 'Goles_Torneo_Pronostico', 'Comprobante_Pago_URL', 'Estatus_Pago', 'Comentarios_Pago'] },
+    { n: 'Pronosticos', col: ['ID_Pronostico', 'Email_Participante', 'ID_Partido', 'Gol_Local', 'Gol_Visita', 'Fecha_Registro', 'Puntos_Obtenidos', 'Calculado'] },
+    { n: 'Log_Errores', col: ['Fecha', 'Funcion', 'Error', 'Detalle'] }
+  ];
   h.forEach(function(x) { if(!ss.getSheetByName(x.n)){ var s = ss.insertSheet(x.n); s.appendRow(x.col); } });
   var cS = ss.getSheetByName('Configuracion');
-  if (cS.getLastRow() === 1) {
+  if (cS && cS.getLastRow() === 1) {
     var d = [['PUNTOS_MARCADOR_EXACTO', 5],['PUNTOS_ACIERTA_GANADOR', 2],['PUNTOS_ERROR', -1],['PUNTOS_BONUS_ELIMINATORIA', 3],['HORAS_CIERRE_PRONOSTICO', 24],['ADMIN_EMAIL', Session.getEffectiveUser().getEmail()],['ZONA_HORARIA', 'America/Mexico_City'],['TORNEO_NOMBRE', 'Quiniela Mundial 2026']];
     cS.getRange(2, 1, d.length, 2).setValues(d);
   }
+}
+
+function seedEquipos() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var hoja = ss.getSheetByName("Equipos"); if (!hoja) hoja = ss.insertSheet("Equipos");
+  hoja.clear();
+  var d = [["ID_Equipo", "Nombre_Equipo", "Bandera", "Grupo"]];
+  var teams = [[1, "México", "🇲🇽", "A"], [2, "Sudáfrica", "🇿🇦", "A"], [3, "Corea del Sur", "🇰🇷", "A"], [4, "República Checa", "🇨🇿", "A"], [5, "Canadá", "🇨🇦", "B"], [6, "Bosnia y Herzegovina", "🇧🇦", "B"], [7, "Qatar", "🇶🇦", "B"], [8, "Suiza", "🇨🇭", "B"], [9, "Brasil", "🇧🇷", "C"], [10, "Marruecos", "🇲🇦", "C"], [11, "Haití", "🇭🇹", "C"], [12, "Escocia", "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "C"], [13, "Estados Unidos", "🇺🇸", "D"], [14, "Paraguay", "🇵🇾", "D"], [15, "Australia", "🇦🇺", "D"], [16, "Turquía", "🇹🇷", "D"], [17, "Alemania", "🇩🇪", "E"], [18, "Curazao", "🇨🇼", "E"], [19, "Costa de Marfil", "🇨🇮", "E"], [20, "Ecuador", "🇪🇨", "E"], [21, "Países Bajos", "🇳🇱", "F"], [22, "Japón", "🇯🇵", "F"], [23, "Suecia", "🇸🇪", "F"], [24, "Túnez", "🇹🇳", "F"], [25, "Bélgica", "🇧🇪", "G"], [26, "Egipto", "🇪🇬", "G"], [27, "Irán", "🇮🇷", "G"], [28, "Nueva Zelanda", "🇳🇿", "G"], [29, "España", "🇪🇸", "H"], [30, "Cabo Verde", "🇨🇻", "H"], [31, "Arabia Saudita", "🇸🇦", "H"], [32, "Uruguay", "🇺🇾", "H"], [33, "Francia", "🇫🇷", "I"], [34, "Senegal", "🇸🇳", "I"], [35, "Irak", "🇮🇶", "I"], [36, "Noruega", "🇳🇴", "I"], [37, "Argentina", "🇦🇷", "J"], [38, "Argelia", "🇩🇿", "J"], [39, "Austria", "🇦🇹", "J"], [40, "Jordania", "🇯🇴", "J"], [41, "Portugal", "🇵🇹", "K"], [42, "RD Congo", "🇨🇩", "K"], [43, "Uzbekistán", "🇺🇿", "K"], [44, "Colombia", "🇨🇴", "K"], [45, "Inglaterra", "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "L"], [46, "Croacia", "🇭🇷", "L"], [47, "Ghana", "🇬🇭", "L"], [48, "Panamá", "🇵🇦", "L"]];
+  teams.forEach(function(t) { d.push(t); });
+  hoja.getRange(1, 1, d.length, 4).setValues(d);
 }
 
 function seedBanderas() {
@@ -521,7 +508,6 @@ function seedPartidos() {
   hoja.clear();
   var h = ["ID_Partido", "Fase", "Grupo", "Fecha", "Hora_UTC", "Equipo_Local", "Bandera_Local", "Equipo_Visita", "Bandera_Visita", "Gol_Local_Real", "Gol_Visita_Real", "Estado", "Fecha_Cierre", "Llave", "Match_Num"];
   hoja.getRange(1, 1, 1, h.length).setValues([h]);
-
   var p = [
     ["M1", "Fase de Grupos", "A", new Date(2026, 5, 11), "20:00", "México", "", "Corea del Sur", "", "", "", "PENDIENTE", "", "", "1"],
     ["M2", "Fase de Grupos", "A", new Date(2026, 5, 12), "15:00", "Sudáfrica", "", "República Checa", "", "", "", "PENDIENTE", "", "", "2"],
@@ -543,36 +529,8 @@ function seedPartidos() {
   hoja.getRange(2, 1, p.length, 15).setValues(p);
 }
 
-function actualizarResultadosAPI() {
-  var config = getConfig();
-  if (!config.API_FOOTBALL_KEY) return { success: false, error: "Falta API Key" };
-  // Lógica de fetch aquí...
-  return { success: true, message: "Funcionalidad preparada para implementación de API" };
-}
-
-function insertarDatosPrueba() { seedBanderas(); seedPartidos(); registrarParticipante("admin@demo.com", "Admin", "Admin"); return { success: true, message: "OK" }; }
-
 function abrirWebApp() {
   var url = ScriptApp.getService().getUrl();
   var html = HtmlService.createHtmlOutput('<html><script>window.open("' + url + '", "_blank");google.script.host.close();</script></html>').setWidth(300).setHeight(100);
   SpreadsheetApp.getUi().showModalDialog(html, 'Abriendo...');
-}
-
-
-function testLecturaSheet() {
-  var ui = SpreadsheetApp.getUi();
-  try {
-    var part = obtenerPartidosParaUsuario(Session.getEffectiveUser().getEmail());
-
-    var msg = "Prueba de Lectura:\n";
-    msg += "- Partidos leídos: " + (part.partidos ? part.partidos.length : 0) + "\n";
-    if(part.partidos && part.partidos.length > 0) {
-      msg += "- Equipo 1: " + part.partidos[0].equipoLocal + " vs " + part.partidos[0].equipoVisita + "\n";
-      msg += "- Estado M1: " + part.partidos[0].estadoPronostico + "\n";
-    }
-
-    ui.alert(msg);
-  } catch(e) {
-    ui.alert("Error en test: " + e.toString());
-  }
 }
