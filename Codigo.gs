@@ -487,7 +487,19 @@ function guardarPronosticos(email, pronArr) {
 
 // --- ADMIN Y INICIALIZACION ---
 
+function checkAdmin() {
+  var config = getConfig();
+  var userEmail = "";
+  try {
+    userEmail = Session.getEffectiveUser().getEmail();
+  } catch(e) {}
+  if (userEmail !== config.ADMIN_EMAIL) {
+    throw new Error("Acceso denegado: Se requiere perfil de administrador.");
+  }
+}
+
 function inicializarSistemaCompleto() {
+  checkAdmin();
   inicializarSistema();
   seedEquipos();
   seedBanderas();
@@ -522,6 +534,7 @@ function inicializarSistema() {
 }
 
 function seedEquipos() {
+  checkAdmin();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var hoja = ss.getSheetByName("Equipos"); if (!hoja) hoja = ss.insertSheet("Equipos");
   hoja.clear();
@@ -532,6 +545,7 @@ function seedEquipos() {
 }
 
 function seedBanderas() {
+  checkAdmin();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var hoja = ss.getSheetByName("Banderas"); if (!hoja) hoja = ss.insertSheet("Banderas");
   hoja.clear();
@@ -542,6 +556,7 @@ function seedBanderas() {
 }
 
 function seedPartidos() {
+  checkAdmin();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var hoja = ss.getSheetByName("Partidos"); if (!hoja) hoja = ss.insertSheet("Partidos");
   hoja.clear();
@@ -687,6 +702,7 @@ function abrirWebApp() {
  */
 function actualizarResultadoManual(idPartido, golLocal, golVisita) {
   try {
+    checkAdmin();
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var hoja = ss.getSheetByName("Partidos");
     var data = hoja.getDataRange().getValues();
@@ -746,6 +762,7 @@ function enviarNotificaciones() {
  * ADMIN: Crear backup de la hoja.
  */
 function crearBackup() {
+  checkAdmin();
   var ss = SpreadsheetApp.getActive();
   var folder = DriveApp.getRootFolder();
   var file = DriveApp.getFileById(ss.getId());
