@@ -369,59 +369,57 @@
 
   function renderizarPartidos() {
     const container = document.getElementById('lista-partidos-pronostico');
-    container.innerHTML = '';
+    let html = '';
     let faseActual = '';
     let grupoActual = '';
 
     PARTIDOS.forEach(p => {
-      if (p.fase !== faseActual) {
-        faseActual = p.fase;
+      let labelFase = p.fase;
+      if (labelFase.toUpperCase() === 'FASE DE GRUPOS') labelFase = 'PRIMERA FASE';
+
+      if (labelFase !== faseActual) {
+        faseActual = labelFase;
         grupoActual = ''; // Resetear grupo al cambiar de fase
-        const h = document.createElement('div');
-        h.className = 'fase-header';
-        h.innerText = faseActual.toUpperCase();
-        container.appendChild(h);
+        html += `<div class="fase-header">${faseActual.toUpperCase()}</div>`;
       }
 
-      // Subdivisión por grupo en la Fase de Grupos
-      if (p.fase.toUpperCase().includes('GRUPO') && p.grupo && p.grupo !== grupoActual) {
+      // Subdivisión por grupo en la Fase de Grupos (PRIMERA FASE)
+      if (faseActual.toUpperCase() === 'PRIMERA FASE' && p.grupo && p.grupo !== grupoActual) {
         grupoActual = p.grupo;
-        const gh = document.createElement('div');
-        gh.className = 'grupo-header';
-        gh.innerText = 'GRUPO ' + grupoActual;
-        container.appendChild(gh);
+        html += `<div class="grupo-header">GRUPO ${grupoActual}</div>`;
       }
 
       const pr = p.miPronostico || { golLocal: '', golVisita: '' };
-      const row = document.createElement('div');
-      row.className = 'match-row';
-
       let badgeClass = 'bg-esperando';
       if (p.estadoPronostico === 'ABIERTO') badgeClass = 'bg-abierto';
       else if (p.estadoPronostico === 'CERRADO') badgeClass = 'bg-cerrado';
       else if (p.estadoPronostico === 'JUGADO') badgeClass = 'bg-jugado';
       else if (p.estadoPronostico.startsWith('CIERRA')) badgeClass = 'bg-proximamente';
 
-      row.innerHTML = `
-        <div class="team-side local">
-          <img src="${p.urlBanderaLocal}" class="flag" onerror="this.src='https://flagcdn.com/w80/un.png'">
-          <span class="team-name">${p.nombreLocal}</span>
+      const urlFallback = 'https://flagcdn.com/w80/un.png';
+
+      html += `
+        <div class="match-row">
+          <div class="team-side local">
+            <img src="${p.urlBanderaLocal}" class="flag" onerror="this.onerror=null; this.src='${urlFallback}';">
+            <span class="team-name">${p.nombreLocal}</span>
+          </div>
+          <div class="score-center">
+            <input type="number" class="score-input p-l-${p.idPartido}" value="${pr.golLocal}"
+                   min="0" max="20" ${p.inputsHabilitados ? '' : 'disabled'}>
+            <span style="margin: 0 10px; font-weight: bold; font-size: 20px;">-</span>
+            <input type="number" class="score-input p-v-${p.idPartido}" value="${pr.golVisita}"
+                   min="0" max="20" ${p.inputsHabilitados ? '' : 'disabled'}>
+          </div>
+          <div class="team-side visita">
+            <span class="team-name">${p.nombreVisita}</span>
+            <img src="${p.urlBanderaVisita}" class="flag" onerror="this.onerror=null; this.src='${urlFallback}';">
+          </div>
+          <div class="status-badge ${badgeClass}">${p.estadoPronostico}</div>
         </div>
-        <div class="score-center">
-          <input type="number" class="score-input p-l-${p.idPartido}" value="${pr.golLocal}"
-                 min="0" max="20" ${p.inputsHabilitados ? '' : 'disabled'}>
-          <span style="margin: 0 10px; font-weight: bold; font-size: 20px;">-</span>
-          <input type="number" class="score-input p-v-${p.idPartido}" value="${pr.golVisita}"
-                 min="0" max="20" ${p.inputsHabilitados ? '' : 'disabled'}>
-        </div>
-        <div class="team-side visita">
-          <span class="team-name">${p.nombreVisita}</span>
-          <img src="${p.urlBanderaVisita}" class="flag" onerror="this.src='https://flagcdn.com/w80/un.png'">
-        </div>
-        <div class="status-badge ${badgeClass}">${p.estadoPronostico}</div>
       `;
-      container.appendChild(row);
     });
+    container.innerHTML = html;
   }
 
   function guardarTodos() {
@@ -491,10 +489,22 @@
         if (!res.success) return container.innerHTML = 'Error';
         let html = '';
         let fA = '';
+        let gA = '';
+        const urlFallback = 'https://flagcdn.com/w80/un.png';
+
         res.partidos.forEach(p => {
-           if(p.fase !== fA) {
-             fA = p.fase;
+           let labelFase = p.fase;
+           if (labelFase.toUpperCase() === 'FASE DE GRUPOS') labelFase = 'PRIMERA FASE';
+
+           if(labelFase !== fA) {
+             fA = labelFase;
+             gA = '';
              html += `<div class="fase-header">${fA.toUpperCase()}</div>`;
+           }
+
+           if(fA.toUpperCase() === 'PRIMERA FASE' && p.grupo && p.grupo !== gA) {
+             gA = p.grupo;
+             html += `<div class="grupo-header">GRUPO ${gA}</div>`;
            }
            const gl = p.golLocalReal !== null ? p.golLocalReal : '-';
            const gv = p.golVisitaReal !== null ? p.golVisitaReal : '-';
@@ -504,7 +514,7 @@
              <div class="match-row" style="flex-direction: column; align-items: center; padding: 15px 0;">
                <div style="display: flex; width: 100%; align-items: center; justify-content: center;">
                  <div class="team-side local" style="width: 40%">
-                   <img src="${p.urlBanderaLocal}" class="flag" onerror="this.src='https://flagcdn.com/w80/un.png'">
+                   <img src="${p.urlBanderaLocal}" class="flag" onerror="this.onerror=null; this.src='${urlFallback}';">
                    <span class="team-name" style="font-size: 14px">${p.nombreLocal}</span>
                  </div>
                  <div class="score-center" style="width: 20%; font-size: 18px;">
@@ -512,7 +522,7 @@
                  </div>
                  <div class="team-side visita" style="width: 40%">
                    <span class="team-name" style="font-size: 14px">${p.nombreVisita}</span>
-                   <img src="${p.urlBanderaVisita}" class="flag" onerror="this.src='https://flagcdn.com/w80/un.png'">
+                   <img src="${p.urlBanderaVisita}" class="flag" onerror="this.onerror=null; this.src='${urlFallback}';">
                  </div>
                </div>
                ${mi}
