@@ -214,41 +214,66 @@
 </div>
 
 <script>
-  let USUARIO = null;
-  let PARTIDOS = [];
+  var USUARIO = null;
+  var PARTIDOS = [];
 
-  window.onload = () => {
-    const saved = localStorage.getItem('quiniela2026_user');
-    if (saved) {
-      USUARIO = JSON.parse(saved);
-      document.getElementById('user-alias').innerText = USUARIO.alias;
-      switchView('main-app');
-      cargarPartidos();
-      mostrarReglamento();
-    }
+  window.onload = function() {
+    try {
+      var saved = localStorage.getItem('quiniela2026_user');
+      if (saved && saved !== "undefined") {
+        USUARIO = JSON.parse(saved);
+        if (USUARIO && USUARIO.alias) {
+          document.getElementById('user-alias').innerText = USUARIO.alias;
+          switchView('main-app');
+          cargarPartidos();
+          mostrarReglamento();
+        }
+      }
+    } catch(e) { console.error("Error auto-login", e); }
   };
 
   function mostrarReglamento() {
-    document.getElementById('modal-reglamento').style.display = 'flex';
+    var modal = document.getElementById('modal-reglamento');
+    if (modal) modal.style.display = 'flex';
   }
 
   function cerrarReglamento() {
-    document.getElementById('modal-reglamento').style.display = 'none';
+    var modal = document.getElementById('modal-reglamento');
+    if (modal) modal.style.display = 'none';
   }
 
-  function showLoader(show) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; }
+  function showLoader(show) {
+    var loader = document.getElementById('loader');
+    if (loader) loader.style.display = show ? 'flex' : 'none';
+  }
 
   function switchView(id) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active-view'));
-    document.getElementById(id).classList.add('active-view');
-    document.getElementById('nav-container').style.display = (id === 'main-app') ? 'block' : 'none';
+    var views = document.querySelectorAll('.view');
+    for (var i = 0; i < views.length; i++) {
+      views[i].classList.remove('active-view');
+    }
+    var target = document.getElementById(id);
+    if (target) target.classList.add('active-view');
+
+    var nav = document.getElementById('nav-container');
+    if (nav) nav.style.display = (id === 'main-app') ? 'block' : 'none';
   }
 
   function tab(id, el) {
-    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    var tabs = document.querySelectorAll('.nav-tab');
+    for (var i = 0; i < tabs.length; i++) {
+      tabs[i].classList.remove('active');
+    }
     el.classList.add('active');
-    document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-    document.getElementById('tab-' + id).style.display = 'block';
+
+    var contents = document.querySelectorAll('.tab-content');
+    for (var j = 0; j < contents.length; j++) {
+      contents[j].style.display = 'none';
+    }
+
+    var target = document.getElementById('tab-' + id);
+    if (target) target.style.display = 'block';
+
     if(id === 'ranking') cargarRanking();
     if(id === 'resultados') cargarResultados();
     if(id === 'pago') actualizarVistaPago();
@@ -258,7 +283,7 @@
     if(!USUARIO) return;
     document.getElementById('pago-status-text').innerText = USUARIO.estatusPago || "Pendiente";
 
-    const commentBox = document.getElementById('pago-comentario-box');
+    var commentBox = document.getElementById('pago-comentario-box');
     if (USUARIO.comentarioPago) {
       commentBox.style.display = 'block';
       document.getElementById('pago-comentario-text').innerText = USUARIO.comentarioPago;
@@ -268,46 +293,46 @@
   }
 
   function subirPago() {
-    const fileInput = document.getElementById('pago-file');
+    var fileInput = document.getElementById('pago-file');
     if (fileInput.files.length === 0) return alert('Selecciona un archivo');
 
-    const file = fileInput.files[0];
-    const reader = new FileReader();
+    var file = fileInput.files[0];
+    var reader = new FileReader();
 
     showLoader(true);
     reader.onload = function(e) {
-      const fileData = {
+      var fileData = {
         data: e.target.result.split(',')[1],
         contentType: file.type,
         name: file.name
       };
 
       google.script.run
-        .withSuccessHandler(res => {
+        .withSuccessHandler(function(res) {
           showLoader(false);
-          if (res.success) {
+          if (res && res.success) {
             alert('Comprobante enviado correctamente. Entrará en revisión.');
             USUARIO.estatusPago = "En Revisión";
             localStorage.setItem('quiniela2026_user', JSON.stringify(USUARIO));
             actualizarVistaPago();
           } else {
-            alert('Error: ' + res.error);
+            alert('Error: ' + (res ? res.error : "Error desconocido"));
           }
         })
-        .withFailureHandler(err => { showLoader(false); alert('Error al subir archivo'); })
+        .withFailureHandler(function(err) { showLoader(false); alert('Error al subir archivo'); })
         .subirComprobante(USUARIO.email, fileData);
     };
     reader.readAsDataURL(file);
   }
 
   function login() {
-    const email = document.getElementById('login-email').value;
+    var email = document.getElementById('login-email').value;
     if (!email) return alert('Ingresa tu email');
     showLoader(true);
     google.script.run
-      .withSuccessHandler(res => {
+      .withSuccessHandler(function(res) {
         showLoader(false);
-        if (res.success) {
+        if (res && res.success) {
           USUARIO = res.participante;
           localStorage.setItem('quiniela2026_user', JSON.stringify(USUARIO));
           document.getElementById('user-alias').innerText = USUARIO.alias;
@@ -315,31 +340,37 @@
           cargarPartidos();
           mostrarReglamento();
         } else {
-          alert(res.error);
+          alert(res ? res.error : "Error desconocido en el servidor");
         }
       })
-      .withFailureHandler(err => { showLoader(false); alert('Error de conexión'); })
+      .withFailureHandler(function(err) {
+        showLoader(false);
+        alert('Error de conexión: ' + (err.message || err));
+      })
       .loginParticipante(email);
   }
 
   function registrar() {
-    const email = document.getElementById('reg-email').value;
-    const nombre = document.getElementById('reg-nombre').value;
-    const alias = document.getElementById('reg-alias').value;
-    const goles = document.getElementById('reg-goles').value;
+    var email = document.getElementById('reg-email').value;
+    var nombre = document.getElementById('reg-nombre').value;
+    var alias = document.getElementById('reg-alias').value;
+    var goles = document.getElementById('reg-goles').value;
     if (!email || !nombre || !alias || !goles) return alert('Completa todos los campos, incluyendo los goles estimados.');
     showLoader(true);
     google.script.run
-      .withSuccessHandler(res => {
+      .withSuccessHandler(function(res) {
         showLoader(false);
-        if (res.success) {
+        if (res && res.success) {
           alert('Registro exitoso. Ahora puedes iniciar sesión.');
           switchView('view-login');
         } else {
-          alert(res.error);
+          alert(res ? res.error : "Error al registrar");
         }
       })
-      .withFailureHandler(err => { showLoader(false); alert('Error de conexión'); })
+      .withFailureHandler(function(err) {
+        showLoader(false);
+        alert('Error de conexión: ' + (err.message || err));
+      })
       .registrarParticipante(email, nombre, alias, goles);
   }
 
@@ -347,195 +378,205 @@
     if (!USUARIO) return;
     showLoader(true);
     google.script.run
-      .withSuccessHandler(res => {
+      .withSuccessHandler(function(res) {
         showLoader(false);
-        if (res.success) {
+        if (res && res.success) {
           PARTIDOS = res.partidos;
-          if (PARTIDOS.length === 0) {
+          if (!PARTIDOS || PARTIDOS.length === 0) {
             document.getElementById('lista-partidos-pronostico').innerHTML = '<p style="padding:40px; text-align:center; color:#666">No hay partidos registrados aún.</p>';
           } else {
             renderizarPartidos();
           }
         } else {
-          alert('Error del servidor: ' + res.error);
+          alert('Error del servidor: ' + (res ? res.error : "Desconocido"));
         }
       })
-      .withFailureHandler(err => {
+      .withFailureHandler(function(err) {
         showLoader(false);
-        document.getElementById('lista-partidos-pronostico').innerHTML = '<p style="padding:40px; text-align:center; color:red">Error crítico al conectar con el servidor.</p>';
+        document.getElementById('lista-partidos-pronostico').innerHTML = '<p style="padding:40px; text-align:center; color:red">Error crítico al conectar con el servidor: ' + (err.message || err) + '</p>';
       })
       .obtenerPartidosParaUsuario(USUARIO.email);
   }
 
   function renderizarPartidos() {
-    const container = document.getElementById('lista-partidos-pronostico');
-    let html = '';
-    let faseActual = '';
-    let grupoActual = '';
+    var container = document.getElementById('lista-partidos-pronostico');
+    var html = '';
+    var faseActual = '';
+    var grupoActual = '';
 
-    PARTIDOS.forEach(p => {
-      let labelFase = p.fase;
+    if (!PARTIDOS || PARTIDOS.length === 0) {
+      container.innerHTML = '<p style="padding:20px; text-align:center">No hay partidos cargados.</p>';
+      return;
+    }
+
+    for (var i = 0; i < PARTIDOS.length; i++) {
+      var p = PARTIDOS[i];
+      var labelFase = p.fase;
       if (labelFase.toUpperCase() === 'FASE DE GRUPOS') labelFase = 'PRIMERA FASE';
 
       if (labelFase !== faseActual) {
         faseActual = labelFase;
-        grupoActual = ''; // Resetear grupo al cambiar de fase
-        html += `<div class="fase-header">${faseActual.toUpperCase()}</div>`;
+        grupoActual = '';
+        html += '<div class="fase-header">' + faseActual.toUpperCase() + '</div>';
       }
 
-      // Subdivisión por grupo en la Fase de Grupos (PRIMERA FASE)
       if (faseActual.toUpperCase() === 'PRIMERA FASE' && p.grupo && p.grupo !== grupoActual) {
         grupoActual = p.grupo;
-        html += `<div class="grupo-header">GRUPO ${grupoActual}</div>`;
+        html += '<div class="grupo-header">GRUPO ' + grupoActual + '</div>';
       }
 
-      const pr = p.miPronostico || { golLocal: '', golVisita: '' };
-      let badgeClass = 'bg-esperando';
+      var pr = p.miPronostico || { golLocal: '', golVisita: '' };
+      var badgeClass = 'bg-esperando';
       if (p.estadoPronostico === 'ABIERTO') badgeClass = 'bg-abierto';
       else if (p.estadoPronostico === 'CERRADO') badgeClass = 'bg-cerrado';
       else if (p.estadoPronostico === 'JUGADO') badgeClass = 'bg-jugado';
-      else if (p.estadoPronostico.startsWith('CIERRA')) badgeClass = 'bg-proximamente';
+      else if (p.estadoPronostico.indexOf('CIERRA') !== -1) badgeClass = 'bg-proximamente';
 
-      const urlFallback = 'https://flagcdn.com/w80/un.png';
+      var urlFallback = 'https://flagcdn.com/w80/un.png';
 
-      html += `
-        <div class="match-row">
-          <div class="team-side local">
-            <img src="${p.urlBanderaLocal}" class="flag" onerror="this.onerror=null; this.src='${urlFallback}';">
-            <span class="team-name">${p.nombreLocal}</span>
-          </div>
-          <div class="score-center">
-            <input type="number" class="score-input p-l-${p.idPartido}" value="${pr.golLocal}"
-                   min="0" max="20" ${p.inputsHabilitados ? '' : 'disabled'}>
-            <span style="margin: 0 10px; font-weight: bold; font-size: 20px;">-</span>
-            <input type="number" class="score-input p-v-${p.idPartido}" value="${pr.golVisita}"
-                   min="0" max="20" ${p.inputsHabilitados ? '' : 'disabled'}>
-          </div>
-          <div class="team-side visita">
-            <span class="team-name">${p.nombreVisita}</span>
-            <img src="${p.urlBanderaVisita}" class="flag" onerror="this.onerror=null; this.src='${urlFallback}';">
-          </div>
-          <div class="status-badge ${badgeClass}">${p.estadoPronostico}</div>
-        </div>
-      `;
-    });
+      html += '<div class="match-row">' +
+          '<div class="team-side local">' +
+            '<img src="' + p.urlBanderaLocal + '" class="flag" onerror="this.onerror=null; this.src=\'' + urlFallback + '\';">' +
+            '<span class="team-name">' + p.nombreLocal + '</span>' +
+          '</div>' +
+          '<div class="score-center">' +
+            '<input type="number" class="score-input p-l-' + p.idPartido + '" value="' + pr.golLocal + '" ' +
+                   'min="0" max="20" ' + (p.inputsHabilitados ? '' : 'disabled') + '>' +
+            '<span style="margin: 0 10px; font-weight: bold; font-size: 20px;">-</span>' +
+            '<input type="number" class="score-input p-v-' + p.idPartido + '" value="' + pr.golVisita + '" ' +
+                   'min="0" max="20" ' + (p.inputsHabilitados ? '' : 'disabled') + '>' +
+          '</div>' +
+          '<div class="team-side visita">' +
+            '<span class="team-name">' + p.nombreVisita + '</span>' +
+            '<img src="' + p.urlBanderaVisita + '" class="flag" onerror="this.onerror=null; this.src=\'' + urlFallback + '\';">' +
+          '</div>' +
+          '<div class="status-badge ' + badgeClass + '">' + p.estadoPronostico + '</div>' +
+        '</div>';
+    }
     container.innerHTML = html;
   }
 
   function guardarTodos() {
-    const pronos = [];
-    PARTIDOS.forEach(p => {
+    var pronos = [];
+    for (var i = 0; i < PARTIDOS.length; i++) {
+      var p = PARTIDOS[i];
       if (p.inputsHabilitados) {
-        const gl = document.querySelector('.p-l-' + p.idPartido).value;
-        const gv = document.querySelector('.p-v-' + p.idPartido).value;
+        var gl = document.querySelector('.p-l-' + p.idPartido).value;
+        var gv = document.querySelector('.p-v-' + p.idPartido).value;
         if (gl !== '' && gv !== '') {
           pronos.push({ idPartido: p.idPartido, golLocal: gl, golVisita: gv });
         }
       }
-    });
+    }
 
     if (pronos.length === 0) return alert('No hay pronósticos nuevos para guardar.');
     showLoader(true);
     google.script.run
-      .withSuccessHandler(res => {
+      .withSuccessHandler(function(res) {
         showLoader(false);
-        if (res.success) {
+        if (res && res.success) {
           alert('¡Pronósticos guardados! (' + res.guardados + ')');
           cargarPartidos();
         } else {
-          alert('Error: ' + res.error);
+          alert('Error: ' + (res ? res.error : "Error desconocido"));
         }
       })
-      .withFailureHandler(err => { showLoader(false); alert('Error al guardar'); })
+      .withFailureHandler(function(err) { showLoader(false); alert('Error al guardar'); })
       .guardarPronosticos(USUARIO.email, pronos);
   }
 
   function cargarRanking() {
-    const container = document.getElementById('lista-ranking');
+    var container = document.getElementById('lista-ranking');
     container.innerHTML = '<p style="text-align:center; padding:20px;">Actualizando posiciones...</p>';
     google.script.run
-      .withSuccessHandler(res => {
+      .withSuccessHandler(function(res) {
         if (!res || res.length === 0) {
           container.innerHTML = '<p style="text-align:center; padding:20px;">No hay participantes registrados.</p>';
           return;
         }
-        let html = '<table class="ranking-table"><tr><th>Pos</th><th>Alias</th><th>Pts</th><th>Ex</th></tr>';
-        res.forEach((u, i) => {
-          const cls = i === 0 ? 'pos-1' : (i === 1 ? 'pos-2' : (i === 2 ? 'pos-3' : ''));
-          let posText = i + 1;
+        var html = '<table class="ranking-table"><tr><th>Pos</th><th>Alias</th><th>Pts</th><th>Ex</th></tr>';
+        for (var i = 0; i < res.length; i++) {
+          var u = res[i];
+          var cls = i === 0 ? 'pos-1' : (i === 1 ? 'pos-2' : (i === 2 ? 'pos-3' : ''));
+          var posText = i + 1;
           if (i === 0) posText = '🥇';
           else if (i === 1) posText = '🥈';
           else if (i === 2) posText = '🥉';
 
-          html += `<tr class="${cls}">
-            <td>${posText}</td>
-            <td>${escapeHtml(u.Alias)}</td>
-            <td><b>${u.Puntos_Totales}</b></td>
-            <td>${u.Aciertos_Exactos}</td>
-          </tr>`;
-        });
+          html += '<tr class="' + cls + '">' +
+            '<td>' + posText + '</td>' +
+            '<td>' + escapeHtml(u.Alias) + '</td>' +
+            '<td><b>' + u.Puntos_Totales + '</b></td>' +
+            '<td>' + u.Aciertos_Exactos + '</td>' +
+          '</tr>';
+        }
         html += '</table>';
         container.innerHTML = html;
       })
-      .withFailureHandler(err => { container.innerHTML = '<p style="color:red; text-align:center; padding:20px;">Error al cargar el ranking.</p>'; })
+      .withFailureHandler(function(err) {
+        container.innerHTML = '<p style="color:red; text-align:center; padding:20px;">Error al cargar el ranking.</p>';
+      })
       .obtenerRanking();
   }
 
   function cargarResultados() {
-    const container = document.getElementById('lista-resultados');
+    var container = document.getElementById('lista-resultados');
     container.innerHTML = '<p style="padding:20px; text-align:center">Cargando fixture y resultados...</p>';
     google.script.run
-      .withSuccessHandler(res => {
-        if (!res.success) return container.innerHTML = 'Error';
-        let html = '';
-        let fA = '';
-        let gA = '';
-        const urlFallback = 'https://flagcdn.com/w80/un.png';
+      .withSuccessHandler(function(res) {
+        if (!res || !res.success) return container.innerHTML = 'Error al cargar resultados';
+        var html = '';
+        var fA = '';
+        var gA = '';
+        var urlFallback = 'https://flagcdn.com/w80/un.png';
 
-        res.partidos.forEach(p => {
-           let labelFase = p.fase;
+        for (var i = 0; i < res.partidos.length; i++) {
+           var p = res.partidos[i];
+           var labelFase = p.fase;
            if (labelFase.toUpperCase() === 'FASE DE GRUPOS') labelFase = 'PRIMERA FASE';
 
            if(labelFase !== fA) {
              fA = labelFase;
              gA = '';
-             html += `<div class="fase-header">${fA.toUpperCase()}</div>`;
+             html += '<div class="fase-header">' + fA.toUpperCase() + '</div>';
            }
 
            if(fA.toUpperCase() === 'PRIMERA FASE' && p.grupo && p.grupo !== gA) {
              gA = p.grupo;
-             html += `<div class="grupo-header">GRUPO ${gA}</div>`;
+             html += '<div class="grupo-header">GRUPO ' + gA + '</div>';
            }
-           const gl = p.golLocalReal !== null ? p.golLocalReal : '-';
-           const gv = p.golVisitaReal !== null ? p.golVisitaReal : '-';
-           const mi = p.miPronostico ? `<div style="font-size: 11px; color: #666; margin-top: 2px;">Mi pronóstico: ${p.miPronostico.golLocal} - ${p.miPronostico.golVisita}</div>` : '';
+           var gl = p.golLocalReal !== null ? p.golLocalReal : '-';
+           var gv = p.golVisitaReal !== null ? p.golVisitaReal : '-';
+           var mi = p.miPronostico ? '<div style="font-size: 11px; color: #666; margin-top: 2px;">Mi pronóstico: ' + p.miPronostico.golLocal + ' - ' + p.miPronostico.golVisita + '</div>' : '';
 
-           html += `
-             <div class="match-row" style="flex-direction: column; align-items: center; padding: 15px 0;">
-               <div style="display: flex; width: 100%; align-items: center; justify-content: center;">
-                 <div class="team-side local" style="width: 40%">
-                   <img src="${p.urlBanderaLocal}" class="flag" onerror="this.onerror=null; this.src='${urlFallback}';">
-                   <span class="team-name" style="font-size: 14px">${p.nombreLocal}</span>
-                 </div>
-                 <div class="score-center" style="width: 20%; font-size: 18px;">
-                   <b>${gl} - ${gv}</b>
-                 </div>
-                 <div class="team-side visita" style="width: 40%">
-                   <span class="team-name" style="font-size: 14px">${p.nombreVisita}</span>
-                   <img src="${p.urlBanderaVisita}" class="flag" onerror="this.onerror=null; this.src='${urlFallback}';">
-                 </div>
-               </div>
-               ${mi}
-             </div>`;
-        });
+           html += '<div class="match-row" style="flex-direction: column; align-items: center; padding: 15px 0;">' +
+               '<div style="display: flex; width: 100%; align-items: center; justify-content: center;">' +
+                 '<div class="team-side local" style="width: 40%">' +
+                   '<img src="' + p.urlBanderaLocal + '" class="flag" onerror="this.onerror=null; this.src=\'' + urlFallback + '\';">' +
+                   '<span class="team-name" style="font-size: 14px">' + p.nombreLocal + '</span>' +
+                 '</div>' +
+                 '<div class="score-center" style="width: 20%; font-size: 18px;">' +
+                   '<b>' + gl + ' - ' + gv + '</b>' +
+                 '</div>' +
+                 '<div class="team-side visita" style="width: 40%">' +
+                   '<span class="team-name" style="font-size: 14px">' + p.nombreVisita + '</span>' +
+                   '<img src="' + p.urlBanderaVisita + '" class="flag" onerror="this.onerror=null; this.src=\'' + urlFallback + '\';">' +
+                 '</div>' +
+               '</div>' +
+               mi +
+             '</div>';
+        }
         container.innerHTML = html;
       })
-      .withFailureHandler(err => { container.innerHTML = 'Error'; })
+      .withFailureHandler(function(err) {
+        container.innerHTML = 'Error: ' + (err.message || err);
+      })
       .obtenerPartidosParaUsuario(USUARIO.email);
   }
 
   function escapeHtml(text) {
-    const div = document.createElement('div');
+    if (!text) return "";
+    var div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
   }
