@@ -6,15 +6,15 @@
   <title>Quiniela Mundial 2026</title>
   <style>
     :root {
-      --primary: #C9A227; /* Dorado */
-      --secondary: #107C10; /* Verde cancha */
-      --dark: #37474f; /* Slate */
+      --primary: #1A237E; /* Indigo profundo */
+      --secondary: #00BCD4; /* Cyan */
+      --dark: #263238; /* Blue Grey */
       --blanco: #FFFFFF;
       --gris: #f8f9fa;
-      --rojo: #DC3545;
-      --verde: #28A745;
-      --azul: #007BFF;
-      --naranja: #FF8C00;
+      --rojo: #F44336;
+      --verde: #4CAF50;
+      --azul: #2196F3;
+      --naranja: #FF9800;
     }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; background: #eee; }
     .navbar { background: var(--dark); color: white; border-bottom: 3px solid var(--secondary); padding: 1rem; position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
@@ -35,7 +35,7 @@
     .nav-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
 
     /* Partidos Row */
-    .fase-header { background: var(--dark); color: var(--secondary); border-left: 5px solid var(--secondary); padding: 12px; font-weight: bold; text-align: left; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
+    .fase-header { background: var(--primary); color: white; border-left: 5px solid var(--secondary); padding: 12px; font-weight: bold; text-align: left; margin-top: 20px; text-transform: uppercase; letter-spacing: 1px; }
     .grupo-header { background: #eceff1; padding: 8px 20px; font-weight: bold; font-size: 14px; color: var(--dark); border-bottom: 1px solid #cfd8dc; text-transform: uppercase; }
     .match-row { display: flex; align-items: center; padding: 15px 10px; border-bottom: 1px solid #eee; font-size: 14px; }
     .match-row:nth-child(even) { background: var(--gris); }
@@ -163,6 +163,7 @@
     <div class="nav-tab" onclick="tab('ranking', this)">Ranking</div>
     <div class="nav-tab" onclick="tab('pago', this)">Mi Pago</div>
     <div class="nav-tab" onclick="tab('resultados', this)">Resultados</div>
+    <div class="nav-tab admin-only" style="display: none;" onclick="tab('admin', this)">Admin</div>
     <div class="nav-tab" onclick="cerrarSesion()">Salir</div>
   </div>
 
@@ -210,6 +211,27 @@
         Banco: INVEX | CLABE: 059180131318072007 | Concepto: Quiniela
       </div>
     </div>
+
+    <!-- Vista Admin -->
+    <div id="tab-admin" class="tab-content" style="display: none; padding: 20px;">
+      <h3>Consola de Administrador</h3>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+        <button class="btn btn-primary" onclick="adminAction('recalcularTodosLosPuntos')">Recalcular Puntos</button>
+        <button class="btn btn-primary" onclick="adminAction('actualizarFaseEliminatoria')">Actualizar Fase Elab.</button>
+        <button class="btn btn-primary" style="background: #607d8b;" onclick="adminAction('crearBackup', [USUARIO.email])">Crear Backup</button>
+        <button class="btn btn-primary" style="background: #f44336;" onclick="if(confirm('¿BORRAR TODO Y REINICIAR?')) adminAction('inicializarSistemaCompleto', [USUARIO.email])">Resetear Sistema</button>
+      </div>
+
+      <div class="auth-card" style="margin: 0; max-width: 100%; text-align: left;">
+        <h4>Cargar Resultado Manual</h4>
+        <input type="text" id="admin-match-id" class="form-control" placeholder="ID Partido (ej. M1)">
+        <div style="display: flex; gap: 10px;">
+          <input type="number" id="admin-gl" class="form-control" placeholder="Goles Local">
+          <input type="number" id="admin-gv" class="form-control" placeholder="Goles Visita">
+        </div>
+        <button class="btn btn-primary" onclick="guardarResultadoManual()">Guardar Resultado</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -224,6 +246,10 @@
         USUARIO = JSON.parse(saved);
         if (USUARIO && USUARIO.alias) {
           document.getElementById('user-alias').innerText = USUARIO.alias;
+          if (USUARIO.isAdmin) {
+            var adminTabs = document.querySelectorAll('.admin-only');
+            for(var i=0; i<adminTabs.length; i++) adminTabs[i].style.display = 'block';
+          }
           switchView('main-app');
           cargarPartidos();
           mostrarReglamento();
@@ -336,6 +362,12 @@
           USUARIO = res.participante;
           localStorage.setItem('quiniela2026_user', JSON.stringify(USUARIO));
           document.getElementById('user-alias').innerText = USUARIO.alias;
+
+          if (USUARIO.isAdmin) {
+            var adminTabs = document.querySelectorAll('.admin-only');
+            for(var i=0; i<adminTabs.length; i++) adminTabs[i].style.display = 'block';
+          }
+
           switchView('main-app');
           cargarPartidos();
           mostrarReglamento();
@@ -348,6 +380,39 @@
         alert('Error de conexión: ' + (err.message || err));
       })
       .loginParticipante(email);
+  }
+
+  function adminAction(fn, args) {
+    showLoader(true);
+    google.script.run
+      .withSuccessHandler(function(res) {
+        showLoader(false);
+        alert(res.message || 'Acción completada');
+      })
+      .withFailureHandler(function(err) {
+        showLoader(false);
+        alert('Error: ' + err.message);
+      })[fn].apply(null, args || []);
+  }
+
+  function guardarResultadoManual() {
+    var id = document.getElementById('admin-match-id').value;
+    var gl = document.getElementById('admin-gl').value;
+    var gv = document.getElementById('admin-gv').value;
+    if(!id || gl==='' || gv==='') return alert('Completa los campos');
+
+    showLoader(true);
+    google.script.run
+      .withSuccessHandler(function(res) {
+        showLoader(false);
+        if(res.success) alert(res.message);
+        else alert('Error: ' + res.error);
+      })
+      .withFailureHandler(function(err) {
+        showLoader(false);
+        alert('Error: ' + err.message);
+      })
+      .actualizarResultadoManual(USUARIO.email, id, gl, gv);
   }
 
   function registrar() {
@@ -411,16 +476,16 @@
 
     for (var i = 0; i < PARTIDOS.length; i++) {
       var p = PARTIDOS[i];
-      var labelFase = p.fase;
-      if (labelFase.toUpperCase() === 'FASE DE GRUPOS') labelFase = 'PRIMERA FASE';
+      var displayFase = p.fase.toUpperCase().trim();
+      if (displayFase === 'FASE DE GRUPOS') displayFase = 'PRIMERA FASE';
 
-      if (labelFase !== faseActual) {
-        faseActual = labelFase;
+      if (displayFase !== faseActual) {
+        faseActual = displayFase;
         grupoActual = '';
-        html += '<div class="fase-header">' + faseActual.toUpperCase() + '</div>';
+        html += '<div class="fase-header">' + faseActual + '</div>';
       }
 
-      if (faseActual.toUpperCase() === 'PRIMERA FASE' && p.grupo && p.grupo !== grupoActual) {
+      if (faseActual === 'PRIMERA FASE' && p.grupo && p.grupo !== grupoActual) {
         grupoActual = p.grupo;
         html += '<div class="grupo-header">GRUPO ' + grupoActual + '</div>';
       }
@@ -532,16 +597,16 @@
 
         for (var i = 0; i < res.partidos.length; i++) {
            var p = res.partidos[i];
-           var labelFase = p.fase;
-           if (labelFase.toUpperCase() === 'FASE DE GRUPOS') labelFase = 'PRIMERA FASE';
+           var displayFase = p.fase.toUpperCase().trim();
+           if (displayFase === 'FASE DE GRUPOS') displayFase = 'PRIMERA FASE';
 
-           if(labelFase !== fA) {
-             fA = labelFase;
+           if(displayFase !== fA) {
+             fA = displayFase;
              gA = '';
-             html += '<div class="fase-header">' + fA.toUpperCase() + '</div>';
+             html += '<div class="fase-header">' + fA + '</div>';
            }
 
-           if(fA.toUpperCase() === 'PRIMERA FASE' && p.grupo && p.grupo !== gA) {
+           if(fA === 'PRIMERA FASE' && p.grupo && p.grupo !== gA) {
              gA = p.grupo;
              html += '<div class="grupo-header">GRUPO ' + gA + '</div>';
            }
@@ -589,6 +654,10 @@
     document.getElementById('lista-partidos-pronostico').innerHTML = '';
     document.getElementById('lista-ranking').innerHTML = '';
     document.getElementById('lista-resultados').innerHTML = '';
+
+    var adminTabs = document.querySelectorAll('.admin-only');
+    for(var i=0; i<adminTabs.length; i++) adminTabs[i].style.display = 'none';
+
     switchView('view-login');
   }
 </script>

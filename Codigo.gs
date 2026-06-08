@@ -18,37 +18,15 @@ const CONFIG_BASE = {
 // --- RUTA DE ENTRADA WEB APP ---
 
 function doGet(e) {
-  var params = {};
-  if (e && e.parameter) {
-    params = e.parameter;
-  }
-
-  var page = params.p || 'Index';
   var config = getConfig();
-  var userEmail = "";
   try {
-    userEmail = Session.getEffectiveUser().getEmail();
-  } catch(err) {
-    userEmail = "";
-  }
-
-  if (page === 'Admin' && userEmail !== config.ADMIN_EMAIL) {
-    return HtmlService.createHtmlOutput('<h1>Acceso Denegado</h1><p>Solo el administrador tiene acceso a esta sección.</p>');
-  }
-
-  try {
-    var template = HtmlService.createTemplateFromFile(page);
+    var template = HtmlService.createTemplateFromFile('Index');
     return template.evaluate()
       .setTitle(config.TORNEO_NOMBRE || 'Quiniela 2026')
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
       .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
   } catch (err) {
-    if (page !== 'Index') {
-      try {
-        return HtmlService.createTemplateFromFile('Index').evaluate().setTitle('Quiniela 2026');
-      } catch(err2) {}
-    }
-    return HtmlService.createHtmlOutput('<h1>Error al cargar la página</h1><p>' + err.message + '</p>');
+    return HtmlService.createHtmlOutput('<h1>Error al cargar la aplicación</h1><p>' + err.message + '</p>');
   }
 }
 
@@ -231,6 +209,8 @@ function obtenerPartidosParaUsuario(email) {
     partidos.sort(function(a, b) {
       var fases = {
         "FASE DE GRUPOS": 1,
+        "PRIMERA FASE": 1,
+        "DIECISEISAVOS DE FINAL": 2,
         "RONDA DE 32": 2,
         "OCTAVOS DE FINAL": 3,
         "CUARTOS DE FINAL": 4,
@@ -263,8 +243,9 @@ function obtenerPartidos() {
 
 // --- TORNEO ---
 
-function recalcularTodosLosPuntos() {
+function recalcularTodosLosPuntos(adminEmail) {
   try {
+    if (adminEmail) checkAdmin(adminEmail);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var hojaPartidos = ss.getSheetByName('Partidos');
     var dP = hojaPartidos.getDataRange().getValues();
@@ -320,8 +301,9 @@ function calcularPuntosIndividual(glr, gvr, glp, gvp, esElim, config) {
   return { puntos: Number(config.PUNTOS_ERROR), tipo: "ERROR" };
 }
 
-function actualizarFaseEliminatoria() {
+function actualizarFaseEliminatoria(adminEmail) {
   try {
+    if (adminEmail) checkAdmin(adminEmail);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var hojaPartidos = ss.getSheetByName('Partidos');
     var dataP = hojaPartidos.getDataRange().getValues();
@@ -339,7 +321,8 @@ function actualizarFaseEliminatoria() {
     var mejores8 = terceros.sort(function(a,b) { return b.pts - a.pts || b.dg - a.dg || b.gf - a.gf; }).slice(0, 8);
 
     dataP.forEach(function(p, i) {
-      if (p[idx["FASE"]] === 'Ronda de 32') {
+      var faseN = String(p[idx["FASE"]]).toUpperCase().trim();
+      if (faseN === 'RONDA DE 32' || faseN === 'DIECISEISAVOS DE FINAL') {
         var nL = p[idx["EQUIPO_LOCAL"]], nV = p[idx["EQUIPO_VISITA"]], c = false;
         var r1 = /1ro Grupo ([A-L])/, r2 = /2do Grupo ([A-L])/;
         if (r1.test(nL)) { var g = nL.match(r1)[1]; if(clasificados[g].p1){ nL = clasificados[g].p1.nombre; c = true; } }
@@ -381,7 +364,8 @@ function propagarGanadoresBracket(ss, idx) {
   var hoja = ss.getSheetByName('Partidos');
   var d = hoja.getDataRange().getValues(); var h = d.shift(); var win = {};
   d.forEach(function(m) {
-    if (m[idx["FASE"]] !== 'Fase de Grupos' && String(m[idx["ESTADO"]]).toUpperCase() === 'JUGADO') {
+    var faseN = String(m[idx["FASE"]]).toUpperCase().trim();
+    if (faseN !== 'FASE DE GRUPOS' && faseN !== 'PRIMERA FASE' && String(m[idx["ESTADO"]]).toUpperCase() === 'JUGADO') {
       win[String(m[idx["ID_PARTIDO"]])] = Number(m[idx["GOL_LOCAL_REAL"]]) >= Number(m[idx["GOL_VISITA_REAL"]]) ? m[idx["EQUIPO_LOCAL"]] : m[idx["EQUIPO_VISITA"]];
     }
   });
@@ -416,10 +400,22 @@ function loginParticipante(email) {
     var d = sheet.getDataRange().getValues();
     var mB = String(email || "").toLowerCase();
     var u = d.find(function(r) { return String(r[0]).toLowerCase() === mB; });
+
+    var config = getConfig();
+    var isAdmin = (mB === String(config.ADMIN_EMAIL).toLowerCase());
+
     if(u) {
        return { success: true, participante: {
          email: u[0], nombre: u[1], alias: u[2], puntosTotales: u[3], aciertosExactos: u[4],
-         estatusPago: u[10] || "Pendiente", comentarioPago: u[11] || ""
+         estatusPago: u[10] || "Pendiente", comentarioPago: u[11] || "",
+         isAdmin: isAdmin
+       } };
+    } else if (isAdmin) {
+       // Si es el admin pero no está en la hoja de participantes, permitirle entrar como admin
+       return { success: true, participante: {
+         email: email, nombre: "Administrador", alias: "Admin", puntosTotales: 0, aciertosExactos: 0,
+         estatusPago: "N/A", comentarioPago: "",
+         isAdmin: true
        } };
     }
     return { success: false, error: "Usuario no encontrado" };
@@ -433,7 +429,8 @@ function subirComprobante(email, fileObj) {
     var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
     var blob = Utilities.newBlob(Utilities.base64Decode(fileObj.data), fileObj.contentType, "Pago_" + email + "_" + new Date().getTime());
     var file = folder.createFile(blob);
-    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    // Cambiado a acceso privado (solo dueño y quienes tengan permiso explícito)
+    file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.VIEW);
 
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = ss.getSheetByName("Participantes");
@@ -499,24 +496,31 @@ function guardarPronosticos(email, pronArr) {
 
 // --- ADMIN Y INICIALIZACION ---
 
-function checkAdmin() {
+function checkAdmin(providedEmail) {
   var config = getConfig();
-  var userEmail = "";
+  var adminEmail = String(config.ADMIN_EMAIL || "").toLowerCase();
+  var activeUserEmail = "";
   try {
-    userEmail = Session.getEffectiveUser().getEmail();
+    activeUserEmail = Session.getActiveUser().getEmail();
   } catch(e) {}
-  if (userEmail !== config.ADMIN_EMAIL) {
+
+  // En aplicaciones públicas de Apps Script, getActiveUser() suele ser nulo.
+  // Usamos el providedEmail como respaldo, pero idealmente se validaría contra la sesión.
+  var targetEmail = (activeUserEmail || providedEmail || "").toLowerCase();
+
+  if (targetEmail !== adminEmail || adminEmail === "") {
     throw new Error("Acceso denegado: Se requiere perfil de administrador.");
   }
+  return true;
 }
 
-function inicializarSistemaCompleto() {
-  checkAdmin();
+function inicializarSistemaCompleto(adminEmail) {
+  checkAdmin(adminEmail);
   inicializarSistema();
-  seedEquipos();
-  seedBanderas();
-  seedPartidos();
-  return "Sistema inicializado correctamente.";
+  seedEquipos(adminEmail);
+  seedBanderas(adminEmail);
+  seedPartidos(adminEmail);
+  return { success: true, message: "Sistema inicializado correctamente." };
 }
 
 function registrarError(f, e) {
@@ -545,8 +549,8 @@ function inicializarSistema() {
   }
 }
 
-function seedEquipos() {
-  checkAdmin();
+function seedEquipos(adminEmail) {
+  checkAdmin(adminEmail);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var hoja = ss.getSheetByName("Equipos"); if (!hoja) hoja = ss.insertSheet("Equipos");
   hoja.clear();
@@ -556,8 +560,8 @@ function seedEquipos() {
   hoja.getRange(1, 1, d.length, 4).setValues(d);
 }
 
-function seedBanderas() {
-  checkAdmin();
+function seedBanderas(adminEmail) {
+  checkAdmin(adminEmail);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var hoja = ss.getSheetByName("Banderas"); if (!hoja) hoja = ss.insertSheet("Banderas");
   hoja.clear();
@@ -567,8 +571,8 @@ function seedBanderas() {
   hoja.getRange(1, 1, d.length, 3).setValues(d);
 }
 
-function seedPartidos() {
-  checkAdmin();
+function seedPartidos(adminEmail) {
+  checkAdmin(adminEmail);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var hoja = ss.getSheetByName("Partidos"); if (!hoja) hoja = ss.insertSheet("Partidos");
   hoja.clear();
@@ -627,7 +631,7 @@ function seedPartidos() {
     ["M42", "Fase de Grupos", "G", new Date(2026, 5, 26), "22:00", "Nueva Zelanda", "🇳🇿", "Bélgica", "🇧🇪", "", "", "PENDIENTE", "", "", "42"],
     // GRUPO H
     ["M43", "Fase de Grupos", "H", new Date(2026, 5, 15), "14:00", "España", "🇪🇸", "Cabo Verde", "🇨🇻", "", "", "PENDIENTE", "", "", "43"],
-    ["M44", "Fase de Grupos", "H", new Date(2026, 5, 17), "17:00", "Arabia Saudita", "🇸🇦", "Uruguay", "🇺🇾", "", "", "PENDIENTE", "", "", "44"],
+    ["M44", "Fase de Grupos", "H", new Date(2026, 5, 15), "17:00", "Arabia Saudita", "🇸🇦", "Uruguay", "🇺🇾", "", "", "PENDIENTE", "", "", "44"],
     ["M45", "Fase de Grupos", "H", new Date(2026, 5, 21), "14:00", "Uruguay", "🇺🇾", "Cabo Verde", "🇨🇻", "", "", "PENDIENTE", "", "", "45"],
     ["M46", "Fase de Grupos", "H", new Date(2026, 5, 21), "17:00", "España", "🇪🇸", "Arabia Saudita", "🇸🇦", "", "", "PENDIENTE", "", "", "46"],
     ["M47", "Fase de Grupos", "H", new Date(2026, 5, 26), "20:00", "Cabo Verde", "🇨🇻", "Arabia Saudita", "🇸🇦", "", "", "PENDIENTE", "", "", "47"],
@@ -661,43 +665,43 @@ function seedPartidos() {
     ["M71", "Fase de Grupos", "L", new Date(2026, 5, 27), "17:00", "Panamá", "🇵🇦", "Inglaterra", "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "", "", "PENDIENTE", "", "", "71"],
     ["M72", "Fase de Grupos", "L", new Date(2026, 5, 27), "17:00", "Ghana", "🇬🇭", "Croacia", "🇭🇷", "", "", "PENDIENTE", "", "", "72"],
     // RONDA DE 32
-    ["M73", "Ronda de 32", "", new Date(2026, 5, 28), "12:00", "2do Grupo A", "", "2do Grupo B", "", "", "", "PENDIENTE", "", "", "73"],
-    ["M74", "Ronda de 32", "", new Date(2026, 5, 29), "12:00", "1ro Grupo C", "", "2do Grupo F", "", "", "", "PENDIENTE", "", "", "74"],
-    ["M75", "Ronda de 32", "", new Date(2026, 5, 29), "16:30", "1ro Grupo E", "", "3ro Grupos A/B/C/D/F", "", "", "", "PENDIENTE", "", "", "75"],
-    ["M76", "Ronda de 32", "", new Date(2026, 5, 29), "19:00", "1ro Grupo F", "", "2do Grupo C", "", "", "", "PENDIENTE", "", "", "76"],
-    ["M77", "Ronda de 32", "", new Date(2026, 5, 30), "12:00", "2do Grupo E", "", "2do Grupo I", "", "", "", "PENDIENTE", "", "", "77"],
-    ["M78", "Ronda de 32", "", new Date(2026, 5, 30), "17:00", "1ro Grupo I", "", "3ro Grupos C/D/F/G/H", "", "", "", "PENDIENTE", "", "", "78"],
-    ["M79", "Ronda de 32", "", new Date(2026, 5, 30), "19:00", "1ro Grupo A", "", "3ro Grupos C/E/F/H/I", "", "", "", "PENDIENTE", "", "", "79"],
-    ["M80", "Ronda de 32", "", new Date(2026, 6, 1), "12:00", "1ro Grupo L", "", "3ro Grupos E/H/I/J/K", "", "", "", "PENDIENTE", "", "", "80"],
-    ["M81", "Ronda de 32", "", new Date(2026, 6, 1), "13:00", "1ro Grupo G", "", "3ro Grupos A/E/H/I/J", "", "", "", "PENDIENTE", "", "", "81"],
-    ["M82", "Ronda de 32", "", new Date(2026, 6, 1), "17:00", "1ro Grupo D", "", "3ro Grupos B/E/F/I/J", "", "", "", "PENDIENTE", "", "", "82"],
-    ["M83", "Ronda de 32", "", new Date(2026, 6, 2), "12:00", "1ro Grupo H", "", "2do Grupo J", "", "", "", "PENDIENTE", "", "", "83"],
-    ["M84", "Ronda de 32", "", new Date(2026, 6, 2), "19:00", "2do Grupo K", "", "2do Grupo L", "", "", "", "PENDIENTE", "", "", "84"],
-    ["M85", "Ronda de 32", "", new Date(2026, 6, 2), "20:00", "1ro Grupo B", "", "3ro Grupos E/F/G/I/J", "", "", "", "PENDIENTE", "", "", "85"],
-    ["M86", "Ronda de 32", "", new Date(2026, 6, 3), "13:00", "2do Grupo D", "", "2do Grupo G", "", "", "", "PENDIENTE", "", "", "86"],
-    ["M87", "Ronda de 32", "", new Date(2026, 6, 3), "18:00", "1ro Grupo J", "", "2do Grupo H", "", "", "", "PENDIENTE", "", "", "87"],
-    ["M88", "Ronda de 32", "", new Date(2026, 6, 3), "20:30", "1ro Grupo K", "", "3ro Grupos D/E/I/J/L", "", "", "", "PENDIENTE", "", "", "88"],
-    // OCTAVOS
-    ["M89", "Octavos de Final", "", new Date(2026, 6, 4), "13:00", "Ganador M73", "", "Ganador M75", "", "", "", "PENDIENTE", "", "", "89"],
-    ["M90", "Octavos de Final", "", new Date(2026, 6, 4), "17:00", "Ganador M74", "", "Ganador M77", "", "", "", "PENDIENTE", "", "", "90"],
-    ["M91", "Octavos de Final", "", new Date(2026, 6, 5), "16:00", "Ganador M76", "", "Ganador M78", "", "", "", "PENDIENTE", "", "", "91"],
-    ["M92", "Octavos de Final", "", new Date(2026, 6, 5), "20:00", "Ganador M79", "", "Ganador M80", "", "", "", "PENDIENTE", "", "", "92"],
-    ["M93", "Octavos de Final", "", new Date(2026, 6, 6), "15:00", "Ganador M81", "", "Ganador M82", "", "", "", "PENDIENTE", "", "", "93"],
-    ["M94", "Octavos de Final", "", new Date(2026, 6, 6), "20:00", "Ganador M83", "", "Ganador M84", "", "", "", "PENDIENTE", "", "", "94"],
-    ["M95", "Octavos de Final", "", new Date(2026, 6, 7), "12:00", "Ganador M85", "", "Ganador M86", "", "", "", "PENDIENTE", "", "", "95"],
-    ["M96", "Octavos de Final", "", new Date(2026, 6, 7), "16:00", "Ganador M87", "", "Ganador M88", "", "", "", "PENDIENTE", "", "", "96"],
-    // CUARTOS
-    ["M97", "Cuartos de Final", "", new Date(2026, 6, 9), "16:00", "Ganador M89", "", "Ganador M90", "", "", "", "PENDIENTE", "", "", "97"],
-    ["M98", "Cuartos de Final", "", new Date(2026, 6, 10), "15:00", "Ganador M93", "", "Ganador M94", "", "", "", "PENDIENTE", "", "", "98"],
-    ["M99", "Cuartos de Final", "", new Date(2026, 6, 10), "20:00", "Ganador M91", "", "Ganador M92", "", "", "", "PENDIENTE", "", "", "99"],
-    ["M100", "Cuartos de Final", "", new Date(2026, 6, 11), "20:00", "Ganador M95", "", "Ganador M96", "", "", "", "PENDIENTE", "", "", "100"],
-    // SEMIS
-    ["M101", "Semifinal", "", new Date(2026, 6, 14), "20:00", "Ganador M97", "", "Ganador M98", "", "", "", "PENDIENTE", "", "", "101"],
-    ["M102", "Semifinal", "", new Date(2026, 6, 15), "20:00", "Ganador M99", "", "Ganador M100", "", "", "", "PENDIENTE", "", "", "102"],
+    ["M73", "RONDA DE 32", "", new Date(2026, 5, 28), "12:00", "2do Grupo A", "", "2do Grupo B", "", "", "", "PENDIENTE", "", "", "73"],
+    ["M74", "RONDA DE 32", "", new Date(2026, 5, 29), "12:00", "1ro Grupo C", "", "2do Grupo F", "", "", "", "PENDIENTE", "", "", "74"],
+    ["M75", "RONDA DE 32", "", new Date(2026, 5, 29), "16:30", "1ro Grupo E", "", "3ro Grupos A/B/C/D/F", "", "", "", "PENDIENTE", "", "", "75"],
+    ["M76", "RONDA DE 32", "", new Date(2026, 5, 29), "19:00", "1ro Grupo F", "", "2do Grupo C", "", "", "", "PENDIENTE", "", "", "76"],
+    ["M77", "RONDA DE 32", "", new Date(2026, 5, 30), "12:00", "2do Grupo E", "", "2do Grupo I", "", "", "", "PENDIENTE", "", "", "77"],
+    ["M78", "RONDA DE 32", "", new Date(2026, 5, 30), "17:00", "1ro Grupo I", "", "3ro Grupos C/D/F/G/H", "", "", "", "PENDIENTE", "", "", "78"],
+    ["M79", "RONDA DE 32", "", new Date(2026, 5, 30), "19:00", "1ro Grupo A", "", "3ro Grupos C/E/F/H/I", "", "", "", "PENDIENTE", "", "", "79"],
+    ["M80", "RONDA DE 32", "", new Date(2026, 6, 1), "12:00", "1ro Grupo L", "", "3ro Grupos E/H/I/J/K", "", "", "", "PENDIENTE", "", "", "80"],
+    ["M81", "RONDA DE 32", "", new Date(2026, 6, 1), "13:00", "1ro Grupo G", "", "3ro Grupos A/E/H/I/J", "", "", "", "PENDIENTE", "", "", "81"],
+    ["M82", "RONDA DE 32", "", new Date(2026, 6, 1), "17:00", "1ro Grupo D", "", "3ro Grupos B/E/F/I/J", "", "", "", "PENDIENTE", "", "", "82"],
+    ["M83", "RONDA DE 32", "", new Date(2026, 6, 2), "12:00", "1ro Grupo H", "", "2do Grupo J", "", "", "", "PENDIENTE", "", "", "83"],
+    ["M84", "RONDA DE 32", "", new Date(2026, 6, 2), "19:00", "2do Grupo K", "", "2do Grupo L", "", "", "", "PENDIENTE", "", "", "84"],
+    ["M85", "RONDA DE 32", "", new Date(2026, 6, 2), "20:00", "1ro Grupo B", "", "3ro Grupos E/F/G/I/J", "", "", "", "PENDIENTE", "", "", "85"],
+    ["M86", "RONDA DE 32", "", new Date(2026, 6, 3), "13:00", "2do Grupo D", "", "2do Grupo G", "", "", "", "PENDIENTE", "", "", "86"],
+    ["M87", "RONDA DE 32", "", new Date(2026, 6, 3), "18:00", "1ro Grupo J", "", "2do Grupo H", "", "", "", "PENDIENTE", "", "", "87"],
+    ["M88", "RONDA DE 32", "", new Date(2026, 6, 3), "20:30", "1ro Grupo K", "", "3ro Grupos D/E/I/J/L", "", "", "", "PENDIENTE", "", "", "88"],
+    // OCTAVOS DE FINAL
+    ["M89", "OCTAVOS DE FINAL", "", new Date(2026, 6, 4), "13:00", "Ganador M73", "", "Ganador M75", "", "", "", "PENDIENTE", "", "", "89"],
+    ["M90", "OCTAVOS DE FINAL", "", new Date(2026, 6, 4), "17:00", "Ganador M74", "", "Ganador M77", "", "", "", "PENDIENTE", "", "", "90"],
+    ["M91", "OCTAVOS DE FINAL", "", new Date(2026, 6, 5), "16:00", "Ganador M76", "", "Ganador M78", "", "", "", "PENDIENTE", "", "", "91"],
+    ["M92", "OCTAVOS DE FINAL", "", new Date(2026, 6, 5), "20:00", "Ganador M79", "", "Ganador M80", "", "", "", "PENDIENTE", "", "", "92"],
+    ["M93", "OCTAVOS DE FINAL", "", new Date(2026, 6, 6), "15:00", "Ganador M81", "", "Ganador M82", "", "", "", "PENDIENTE", "", "", "93"],
+    ["M94", "OCTAVOS DE FINAL", "", new Date(2026, 6, 6), "20:00", "Ganador M83", "", "Ganador M84", "", "", "", "PENDIENTE", "", "", "94"],
+    ["M95", "OCTAVOS DE FINAL", "", new Date(2026, 6, 7), "12:00", "Ganador M85", "", "Ganador M86", "", "", "", "PENDIENTE", "", "", "95"],
+    ["M96", "OCTAVOS DE FINAL", "", new Date(2026, 6, 7), "16:00", "Ganador M87", "", "Ganador M88", "", "", "", "PENDIENTE", "", "", "96"],
+    // CUARTOS DE FINAL
+    ["M97", "CUARTOS DE FINAL", "", new Date(2026, 6, 9), "16:00", "Ganador M89", "", "Ganador M90", "", "", "", "PENDIENTE", "", "", "97"],
+    ["M98", "CUARTOS DE FINAL", "", new Date(2026, 6, 10), "15:00", "Ganador M93", "", "Ganador M94", "", "", "", "PENDIENTE", "", "", "98"],
+    ["M99", "CUARTOS DE FINAL", "", new Date(2026, 6, 10), "20:00", "Ganador M91", "", "Ganador M92", "", "", "", "PENDIENTE", "", "", "99"],
+    ["M100", "CUARTOS DE FINAL", "", new Date(2026, 6, 11), "20:00", "Ganador M95", "", "Ganador M96", "", "", "", "PENDIENTE", "", "", "100"],
+    // SEMIFINAL
+    ["M101", "SEMIFINAL", "", new Date(2026, 6, 14), "20:00", "Ganador M97", "", "Ganador M98", "", "", "", "PENDIENTE", "", "", "101"],
+    ["M102", "SEMIFINAL", "", new Date(2026, 6, 15), "20:00", "Ganador M99", "", "Ganador M100", "", "", "", "PENDIENTE", "", "", "102"],
     // TERCER PUESTO
-    ["M103", "Tercer Puesto", "", new Date(2026, 6, 18), "16:00", "Perdedor M101", "", "Perdedor M102", "", "", "", "PENDIENTE", "", "", "103"],
+    ["M103", "TERCER PUESTO", "", new Date(2026, 6, 18), "16:00", "Perdedor M101", "", "Perdedor M102", "", "", "", "PENDIENTE", "", "", "103"],
     // FINAL
-    ["M104", "Final", "", new Date(2026, 6, 19), "15:00", "Ganador M101", "", "Ganador M102", "", "", "", "PENDIENTE", "", "", "104"]
+    ["M104", "FINAL", "", new Date(2026, 6, 19), "15:00", "Ganador M101", "", "Ganador M102", "", "", "", "PENDIENTE", "", "", "104"]
   ];
 
   hoja.getRange(2, 1, p.length, 15).setValues(p);
@@ -712,9 +716,9 @@ function abrirWebApp() {
 /**
  * ADMIN: Actualizar resultado de forma manual.
  */
-function actualizarResultadoManual(idPartido, golLocal, golVisita) {
+function actualizarResultadoManual(adminEmail, idPartido, golLocal, golVisita) {
   try {
-    checkAdmin();
+    checkAdmin(adminEmail);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var hoja = ss.getSheetByName("Partidos");
     var data = hoja.getDataRange().getValues();
@@ -732,8 +736,8 @@ function actualizarResultadoManual(idPartido, golLocal, golVisita) {
     }
 
     if (found) {
-      recalcularTodosLosPuntos();
-      actualizarFaseEliminatoria();
+      recalcularTodosLosPuntos(adminEmail);
+      actualizarFaseEliminatoria(adminEmail);
       return { success: true, message: "Resultado actualizado y puntos recalculados." };
     }
     return { success: false, error: "Partido no encontrado." };
@@ -756,7 +760,8 @@ function actualizarResultadosAPI() {
 /**
  * ADMIN: Notificar a los usuarios.
  */
-function enviarNotificaciones() {
+function enviarNotificaciones(adminEmail) {
+  checkAdmin(adminEmail);
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var h = ss.getSheetByName("Participantes");
   var d = h.getDataRange().getValues(); d.shift();
@@ -773,8 +778,8 @@ function enviarNotificaciones() {
 /**
  * ADMIN: Crear backup de la hoja.
  */
-function crearBackup() {
-  checkAdmin();
+function crearBackup(adminEmail) {
+  checkAdmin(adminEmail);
   var ss = SpreadsheetApp.getActive();
   var folder = DriveApp.getRootFolder();
   var file = DriveApp.getFileById(ss.getId());
@@ -785,14 +790,15 @@ function crearBackup() {
 /**
  * ADMIN: Insertar datos de prueba para validación.
  */
-function insertarDatosPrueba() {
+function insertarDatosPrueba(adminEmail) {
   try {
+    checkAdmin(adminEmail);
     registrarParticipante("juan@email.com", "Juan Perez", "ElCrack", 170);
     registrarParticipante("maria@email.com", "Maria Lopez", "LaMagica", 165);
 
     // Simular algunos resultados
-    actualizarResultadoManual("M1", 2, 1); // México gana
-    actualizarResultadoManual("M2", 0, 0); // Empate
+    actualizarResultadoManual(adminEmail, "M1", 2, 1); // México gana
+    actualizarResultadoManual(adminEmail, "M2", 0, 0); // Empate
 
     // Guardar algunos pronósticos
     guardarPronosticos("juan@email.com", [
@@ -800,7 +806,7 @@ function insertarDatosPrueba() {
       {idPartido: "M2", golLocal: 1, golVisita: 0}
     ]);
 
-    recalcularTodosLosPuntos();
+    recalcularTodosLosPuntos(adminEmail);
     return { success: true, message: "Datos de prueba (Juan, Maria) insertados correctamente." };
   } catch(e) {
     return { success: false, error: e.toString() };
