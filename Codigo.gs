@@ -229,11 +229,23 @@ function obtenerPartidosParaUsuario(email) {
 
     // Ordenar por Fase y luego por Grupo, usando matchNum como desempate
     partidos.sort(function(a, b) {
-      const fases = {"Fase de Grupos": 1, "Ronda de 32": 2, "Octavos de Final": 3, "Cuartos de Final": 4, "Semifinal": 5, "Final": 6};
-      const fa = fases[a.fase] || 99;
-      const fb = fases[b.fase] || 99;
+      var fases = {
+        "FASE DE GRUPOS": 1,
+        "RONDA DE 32": 2,
+        "OCTAVOS DE FINAL": 3,
+        "CUARTOS DE FINAL": 4,
+        "SEMIFINAL": 5,
+        "TERCER PUESTO": 6,
+        "FINAL": 7
+      };
+      var fa = fases[String(a.fase).toUpperCase().trim()] || 99;
+      var fb = fases[String(b.fase).toUpperCase().trim()] || 99;
       if (fa !== fb) return fa - fb;
-      if (a.grupo && b.grupo && a.grupo !== b.grupo) return a.grupo.localeCompare(b.grupo);
+
+      var ga = String(a.grupo || "").toUpperCase().trim();
+      var gb = String(b.grupo || "").toUpperCase().trim();
+      if (ga !== gb) return ga.localeCompare(gb);
+
       return Number(a.matchNum || 0) - Number(b.matchNum || 0);
     });
 
